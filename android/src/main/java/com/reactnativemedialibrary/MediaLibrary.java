@@ -34,6 +34,7 @@ public class MediaLibrary {
   private HybridData mHybridData;
 
   static Uri EXTERNAL_CONTENT_URI = MediaStore.Files.getContentUri("external");
+  static String dateAdded = MediaStore.Files.FileColumns.DATE_ADDED;
   static String[] ASSET_PROJECTION = new String[]{
     MediaStore.Images.Media._ID,
     MediaStore.Files.FileColumns.DISPLAY_NAME,
@@ -41,7 +42,7 @@ public class MediaLibrary {
     MediaStore.Files.FileColumns.MEDIA_TYPE,
     MediaStore.MediaColumns.WIDTH,
     MediaStore.MediaColumns.HEIGHT,
-    MediaStore.Images.Media.DATE_TAKEN,
+    dateAdded,
     MediaStore.Images.Media.DATE_MODIFIED,
     MediaStore.Images.Media.ORIENTATION,
     MediaStore.Video.VideoColumns.DURATION,
@@ -173,7 +174,7 @@ public class MediaLibrary {
     int idIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
     int filenameIndex = cursor.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME);
     int mediaTypeIndex = cursor.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE);
-    int creationDateIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN);
+    int creationDateIndex = cursor.getColumnIndex(dateAdded);
     int modificationDateIndex = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED);
     int durationIndex = cursor.getColumnIndex(MediaStore.Video.VideoColumns.DURATION);
     int localUriIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
@@ -212,7 +213,7 @@ public class MediaLibrary {
   }
 
   private String sortToColumnName(String sort) {
-    if (Objects.equals(sort, "creationTime")) return MediaStore.Images.Media.DATE_TAKEN;
+    if (Objects.equals(sort, "creationTime")) return dateAdded;
     if (Objects.equals(sort, "modificationTime")) return MediaStore.Files.FileColumns.DATE_MODIFIED;
     throw new RuntimeException("Unsupported " + sort);
   }

@@ -27,10 +27,13 @@ export default function App() {
             limit: 1,
             mediaType: ['photo'],
             extensions: ['jpg'],
-            sortBy: 'modificationTime',
-            sortOrder: 'desc',
+            sortBy: 'creationTime',
+            sortOrder: 'asc',
           });
-          console.log('[App.]', assets);
+          console.log(
+            '[App.]',
+            assets.map((e) => e.creationTime)
+          );
           // const end = start - Date.now();
           // // console.log('[App.]', JSON.stringify(assets, undefined, 2));
           // console.log(
