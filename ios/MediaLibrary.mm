@@ -10,6 +10,7 @@
 #import <ReactCommon/RCTTurboModule.h>
 
 #import <Photos/Photos.h>
+#import <CoreServices/CoreServices.h>
 
 using namespace facebook;
 
@@ -49,6 +50,31 @@ jsi::String toJSIString(NSString *value) {
 
 NSString* toString(jsi::String value) {
     return [[NSString alloc] initWithCString:value.utf8(*runtime_).c_str() encoding:NSUTF8StringEncoding];
+}
+
++ (PHAssetMediaType)_assetTypeForUri:(nonnull NSString *)localUri
+{
+  CFStringRef fileExtension = (__bridge CFStringRef)[localUri pathExtension];
+  CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
+  
+  if (UTTypeConformsTo(fileUTI, kUTTypeImage)) {
+    return PHAssetMediaTypeImage;
+  }
+  if (UTTypeConformsTo(fileUTI, kUTTypeMovie)) {
+    return PHAssetMediaTypeVideo;
+  }
+  if (UTTypeConformsTo(fileUTI, kUTTypeAudio)) {
+    return PHAssetMediaTypeAudio;
+  }
+  return PHAssetMediaTypeUnknown;
+}
+
++ (NSURL *)_normalizeAssetURLFromUri:(NSString *)uri
+{
+  if ([uri hasPrefix:@"/"]) {
+    return [NSURL URLWithString:[@"file://" stringByAppendingString:uri]];
+  }
+  return [NSURL URLWithString:uri];
 }
 
 + (NSString *)_stringifyMediaType:(PHAssetMediaType)mediaType
@@ -197,23 +223,77 @@ jsi::Value fetchAssets(const jsi::Value *args) {
 
 -(void)installJSIBindings {
     
+    auto docDir = JSI_HOST_FUNCTION("docDir", 1) {
+        auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+        return toJSIString(paths);
+    });
+    
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 1) {
+        auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+        NSLog(@"===== %@", paths);
+
         return fetchAssets(args);
     });
     
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 1) {
         auto _id = toString(args[0].asString(runtime));
-        
-        PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
+
         auto asset = fetchAssetById(_id);
         if (asset == nil) return jsi::Value::undefined();
         return fromPHAssetToValue(asset, true);
+    });
+    
+    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 1) {
+        auto localUri = toString(args[0].asString(runtime));
+        
+        if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSPhotoLibraryAddUsageDescription"] == nil) {
+            return toJSIString(@"E_NO_PERMISSIONS This app is missing NSPhotoLibraryAddUsageDescription. Add this entry to your bundle's Info.plist.");
+        }
+        
+        if ([[localUri pathExtension] length] == 0) {
+            return toJSIString(@"E_NO_FILE_EXTENSION Could not get the file's extension.");
+        }
+        
+        PHAssetMediaType assetType = [MediaLibrary _assetTypeForUri:localUri];
+        if (assetType == PHAssetMediaTypeUnknown || assetType == PHAssetMediaTypeAudio) {
+            return toJSIString(@"E_UNSUPPORTED_ASSET This file type is not supported yet");
+        }
+        
+        NSURL *assetUrl = [MediaLibrary _normalizeAssetURLFromUri:localUri];
+        if (assetUrl == nil) {
+            return toJSIString(@"E_INVALID_URI Provided localUri is not a valid URI");
+        }
+        
+        __block PHAsset *createdAsset;
+        __block PHObjectPlaceholder *assetPlaceholder;
+        [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+            PHAssetChangeRequest *changeRequest = assetType == PHAssetMediaTypeVideo
+            ? [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:assetUrl]
+            : [PHAssetChangeRequest creationRequestForAssetFromImageAtFileURL:assetUrl];
+            
+            assetPlaceholder = changeRequest.placeholderForCreatedAsset;
+            
+        } completionHandler:^(BOOL success, NSError *error) {
+            if (success) {
+                createdAsset = fetchAssetById(assetPlaceholder.localIdentifier);
+            } else {
+                NSLog(@"E_ASSET_SAVE_FAILED %@ %@", @"Asset couldn't be saved to photo library", error);
+            }
+            dispatch_semaphore_signal(sema);
+        }];
+        
+        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+        
+        if (createdAsset == nil) return jsi::Value(false);
+        return fromPHAssetToValue(createdAsset, true);
     });
 
 
     auto exportModule = jsi::Object(*runtime_);
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
+    exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
+    exportModule.setProperty(*runtime_, "docDir", std::move(docDir));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

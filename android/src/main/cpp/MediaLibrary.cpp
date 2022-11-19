@@ -52,8 +52,17 @@ void MediaLibrary::installJSIBindings() {
         return jsi::Value::createFromJsonUtf8(runtime, reinterpret_cast<const uint8_t *>(str.c_str()), str.size());
    });
 
+    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 1) {
+        auto params = jni::make_jstring(args[0].asString(runtime).utf8(runtime));
+        auto method = javaPart_->getClass()->getMethod<JString(jni::local_ref<JString>)>("saveToLibrary");
+        auto response = method(javaPart_.get(), params);
+        auto str = response->toStdString();
+        return jsi::Value::createFromJsonUtf8(runtime, reinterpret_cast<const uint8_t *>(str.c_str()), str.size());
+    });
+
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
+    exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

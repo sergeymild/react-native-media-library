@@ -23,6 +23,7 @@ declare global {
   var __mediaLibrary: {
     getAsset(id: string): FullAssetItem;
     getAssets(options?: Options | string): AssetItem[];
+    saveToLibrary(localUrl: string): AssetItem | string;
   };
 }
 
@@ -70,5 +71,9 @@ export const mediaLibrary = {
 
   getAsset(id: string): FullAssetItem {
     return __mediaLibrary.getAsset(id);
+  },
+
+  saveToLibrary(localUrl: string): AssetItem | string {
+    return __mediaLibrary.saveToLibrary(localUrl);
   },
 };

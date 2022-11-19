@@ -1,13 +1,16 @@
 package com.reactnativemedialibrary;
 
+import static com.reactnativemedialibrary.MediaLibraryUtils.errorJson;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 
 import com.facebook.jni.HybridData;
@@ -19,12 +22,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 @DoNotStrip
 public class MediaLibrary {
@@ -254,6 +256,27 @@ public class MediaLibrary {
       putAssetsInfo(cursor, contentResolver, array, new JSONObject(), 1);
       if (array.length() > 0) return array.getJSONObject(0).toString();
       return null;
+    }
+  }
+
+  @DoNotStrip
+  String saveToLibrary(String params) throws JSONException, InterruptedException {
+    try {
+      Semaphore semaphore = new Semaphore(0);
+      final String[] resultUri = {null};
+      final String[] resultError = {null};
+      new MedialLibraryCreateAsset().saveToLibrary(params, context, result -> {
+        resultUri[0] = result.has("id") ? result.getString("id") : null;
+        resultError[0] = result.has("error") ? result.getString("error") : null;
+        semaphore.release();
+      });
+      semaphore.acquire();;
+      if (resultError[0] != null) {
+        return errorJson(resultError[0]).toString();
+      }
+      return getAsset(resultUri[0]);
+    } catch (IOException e) {
+      return errorJson("Unable to copy file into external storage").toString();
     }
   }
 }
