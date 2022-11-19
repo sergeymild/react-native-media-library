@@ -6,7 +6,9 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo managed workflow\n';
 
-const MediaLibrary = NativeModules.MediaLibrary  ? NativeModules.MediaLibrary  : new Proxy(
+const MediaLibrary = NativeModules.MediaLibrary
+  ? NativeModules.MediaLibrary
+  : new Proxy(
       {},
       {
         get() {
@@ -15,6 +17,33 @@ const MediaLibrary = NativeModules.MediaLibrary  ? NativeModules.MediaLibrary  :
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return MediaLibrary.multiply(a, b);
+MediaLibrary.install();
+
+declare global {
+  var __mediaLibrary: {
+    getAssetUrl(id: string): string;
+    getAssets(options?: {
+      mediaType?: string[];
+      requestUrls?: boolean;
+      limit?: number;
+    }): any[];
+  };
 }
+
+export const mediaLibrary = {
+  getAssets(options?: {
+    mediaType?: string[];
+    requestUrls?: boolean;
+    limit?: number;
+  }) {
+    return __mediaLibrary.getAssets({
+      mediaType: options?.mediaType,
+      requestUrls: options?.requestUrls ?? false,
+      limit: options?.limit,
+    });
+  },
+
+  getAssetUrl(id: string) {
+    return __mediaLibrary.getAssetUrl(id);
+  },
+};

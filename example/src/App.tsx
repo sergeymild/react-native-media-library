@@ -1,18 +1,37 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-media-library';
+import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
+import { mediaLibrary } from 'react-native-media-library';
+import { useState } from 'react';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-
-  React.useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
+  const [image, setImage] = useState();
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <TouchableOpacity
+        style={{ height: 50 }}
+        onPress={() => {
+          const start = Date.now();
+          const assets = mediaLibrary.getAssets({
+            requestUrls: false,
+          });
+          const end = start - Date.now();
+          console.log('[App.]', JSON.stringify(assets, undefined, 2));
+          console.log(
+            '[App.]',
+            assets.length,
+            end,
+            mediaLibrary.getAssetUrl(assets[0].id)
+          );
+          // setImage(assets[2].url);
+        }}
+      >
+        <Text>Photos</Text>
+      </TouchableOpacity>
+      {!!image && (
+        <Image source={{ uri: image }} style={{ width: 100, height: 100 }} />
+      )}
     </View>
   );
 }
@@ -22,6 +41,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'white',
   },
   box: {
     width: 60,
