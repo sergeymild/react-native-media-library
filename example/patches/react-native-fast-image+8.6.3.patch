@@ -1,0 +1,30 @@
+diff --git a/node_modules/react-native-fast-image/ios/FastImage/FFFastImageViewManager.m b/node_modules/react-native-fast-image/ios/FastImage/FFFastImageViewManager.m
+index 84ca94e..3c97354 100644
+--- a/node_modules/react-native-fast-image/ios/FastImage/FFFastImageViewManager.m
++++ b/node_modules/react-native-fast-image/ios/FastImage/FFFastImageViewManager.m
+@@ -3,11 +3,25 @@
+ 
+ #import <SDWebImage/SDImageCache.h>
+ #import <SDWebImage/SDWebImagePrefetcher.h>
++#import <SDWebImagePhotosPlugin/SDWebImagePhotosPlugin.h>
+ 
+ @implementation FFFastImageViewManager
+ 
+ RCT_EXPORT_MODULE(FastImageView)
+ 
++
++- (id) init
++{
++    self = [super init];
++    
++    // Supports HTTP URL as well as Photos URL globally
++    SDImageLoadersManager.sharedManager.loaders = @[SDWebImageDownloader.sharedDownloader, SDImagePhotosLoader.sharedLoader];
++    // Replace default manager's loader implementation
++    SDWebImageManager.defaultImageLoader = SDImageLoadersManager.sharedManager;
++    
++    return self;
++}
++
+ - (FFFastImageView*)view {
+   return [[FFFastImageView alloc] init];
+ }

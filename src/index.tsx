@@ -21,29 +21,54 @@ MediaLibrary.install();
 
 declare global {
   var __mediaLibrary: {
-    getAssetUrl(id: string): string;
-    getAssets(options?: {
-      mediaType?: string[];
-      requestUrls?: boolean;
-      limit?: number;
-    }): any[];
+    getAsset(id: string): FullAssetItem;
+    getAssets(options?: Options | string): AssetItem[];
   };
 }
 
+interface Options {
+  mediaType?: MediaType[];
+  sortBy?: 'creationTime' | 'modificationTime';
+  sortOrder?: 'asc' | 'desc';
+  extensions?: string[];
+  requestUrls?: boolean;
+  limit?: number;
+}
+
+export type MediaType = 'photo' | 'video' | 'audio' | 'unknown';
+export interface AssetItem {
+  readonly filename: string;
+  readonly id: string;
+  readonly creationTime: number;
+  readonly modificationTime: number;
+  readonly mediaType: MediaType;
+  readonly duration: number;
+  readonly width: number;
+  readonly height: number;
+  readonly uri: string;
+  readonly url?: string;
+}
+
+export interface FullAssetItem extends AssetItem {
+  readonly url: string;
+}
+
 export const mediaLibrary = {
-  getAssets(options?: {
-    mediaType?: string[];
-    requestUrls?: boolean;
-    limit?: number;
-  }) {
-    return __mediaLibrary.getAssets({
+  getAssets(options?: Options): AssetItem[] {
+    const params = {
       mediaType: options?.mediaType,
+      sortBy: options?.sortBy,
+      sortOrder: options?.sortOrder,
+      extensions: options?.extensions,
       requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
-    });
+    };
+    return __mediaLibrary.getAssets(
+      Platform.OS === 'android' ? JSON.stringify(params) : params
+    );
   },
 
-  getAssetUrl(id: string) {
-    return __mediaLibrary.getAssetUrl(id);
+  getAsset(id: string): FullAssetItem {
+    return __mediaLibrary.getAsset(id);
   },
 };

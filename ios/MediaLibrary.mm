@@ -23,7 +23,7 @@ NSString *const AssetMediaTypePhoto = @"photo";
 NSString *const AssetMediaTypeVideo = @"video";
 NSString *const AssetMediaTypeUnknown = @"unknown";
 NSString *const AssetMediaTypeAll = @"all";
-
+dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
 + (BOOL)requiresMainQueueSetup
 {
@@ -45,6 +45,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
 jsi::String toJSIString(NSString *value) {
   return jsi::String::createFromUtf8(*runtime_, [value UTF8String] ?: "");
+}
+
+NSString* toString(jsi::String value) {
+    return [[NSString alloc] initWithCString:value.utf8(*runtime_).c_str() encoding:NSUTF8StringEncoding];
 }
 
 + (NSString *)_stringifyMediaType:(PHAssetMediaType)mediaType
@@ -74,6 +78,31 @@ jsi::String toJSIString(NSString *value) {
   return [localId stringByReplacingOccurrencesOfString:@"/.*" withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, localId.length)];
 }
 
++ (NSString *)_assetUriForLocalId:(nonnull NSString *)localId
+{
+  NSString *assetId = [MediaLibrary _assetIdFromLocalId:localId];
+  return [NSString stringWithFormat:@"ph://%@", assetId];
+}
+
+
++ (NSString *)_toSdUrl:(nonnull NSString *)localId
+{
+    return [[NSURL URLWithString:[NSString stringWithFormat:@"ph://%@", localId]] absoluteString];
+}
+
+NSSortDescriptor* _sortDescriptorFrom(jsi::Value sortBy, jsi::Value sortOrder)
+{
+    auto sortKey = toString(sortBy.asString(*runtime_));
+    if ([sortKey  isEqual: @"creationTime"] || [sortKey  isEqual: @"modificationTime"]) {
+        bool ascending = false;
+        if (!sortOrder.isUndefined() && sortOrder.asString(*runtime_).utf8(*runtime_) == "asc") {
+            ascending = true;
+        }
+        return [NSSortDescriptor sortDescriptorWithKey:sortKey ascending:ascending];
+    }
+    return nil;
+}
+
 PHAsset* fetchAssetById(NSString* _id) {
     PHFetchOptions *options = [PHFetchOptions new];
     options.includeHiddenAssets = YES;
@@ -82,7 +111,7 @@ PHAsset* fetchAssetById(NSString* _id) {
     return [PHAsset fetchAssetsWithLocalIdentifiers:@[_id] options:options].firstObject;
 }
 
-NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *options, dispatch_semaphore_t sema) {
+NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *options) {
     __block NSString *url = @"";
     if (asset.mediaType == PHAssetMediaTypeImage) {
         [asset requestContentEditingInputWithOptions:options completionHandler:^(PHContentEditingInput * _Nullable contentEditingInput, NSDictionary * _Nonnull info) {
@@ -102,18 +131,51 @@ NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *optio
     return url;
 }
 
+jsi::Value fromPHAssetToValue(PHAsset *asset, bool requestUrls) {
+    auto object = jsi::Object(*runtime_);
+    
+    if (requestUrls) {
+        PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
+        object.setProperty(*runtime_, "url", toJSIString(_requestUrl(asset, options)));
+    }
+    
+    object.setProperty(*runtime_, "fileName", toJSIString([asset valueForKey:@"filename"]));
+    object.setProperty(*runtime_, "id", toJSIString(asset.localIdentifier));
+    object.setProperty(*runtime_, "creationTime", [MediaLibrary _exportDate:asset.creationDate]);
+    object.setProperty(*runtime_, "modificationTime", [MediaLibrary _exportDate:asset.modificationDate]);
+    object.setProperty(*runtime_, "mediaType", toJSIString([MediaLibrary _stringifyMediaType:asset.mediaType]));
+    object.setProperty(*runtime_, "duration", asset.duration);
+    object.setProperty(*runtime_, "width", (double)asset.pixelWidth);
+    object.setProperty(*runtime_, "height", (double)asset.pixelHeight);
+    object.setProperty(*runtime_, "uri", toJSIString([MediaLibrary _toSdUrl:asset.localIdentifier]));
+    return object;
+}
+
 jsi::Value fetchAssets(const jsi::Value *args) {
 //    fetchAssetGroups();
     auto params = args[0].asObject(*runtime_);
     bool requestUrls = params.getProperty(*runtime_, "requestUrls").getBool();
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
-    NSMutableArray<NSPredicate *> *predicates = [NSMutableArray new];
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    NSMutableArray<NSDictionary *> *assets = [NSMutableArray new];
     
+    // limit
     auto limit = params.getProperty(*runtime_, "limit");
     if (!limit.isUndefined()) {
         fetchOptions.fetchLimit = limit.asNumber();
+    }
+    
+    // sort
+    auto sortBy = params.getProperty(*runtime_, "sortBy");
+    auto sortOrder = params.getProperty(*runtime_, "sortOrder");
+    if (!sortBy.isUndefined()) {
+        auto sortKey = toString(sortBy.asString(*runtime_));
+        if ([sortKey isEqual: @"creationTime"] || [sortKey  isEqual: @"modificationTime"]) {
+            bool ascending = false;
+            auto key = [sortKey isEqual: @"creationTime"] ? @"creationDate" : @"modificationDate";
+            if (sortOrder.asString(*runtime_).utf8(*runtime_) == "asc") {
+                ascending = true;
+            }
+            fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
+        }
     }
     
     fetchOptions.includeAllBurstAssets = false;
@@ -122,27 +184,11 @@ jsi::Value fetchAssets(const jsi::Value *args) {
     
     auto photosResult = jsi::Array(*runtime_, result.count);
     
-    PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
     
-    
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     for (int i = 0; i < result.count; i++) {
         PHAsset* asset = [result objectAtIndex:i];
         
-        auto photo = jsi::Object(*runtime_);
-        
-        if (requestUrls) {
-            photo.setProperty(*runtime_, "url", toJSIString(_requestUrl(asset, options, sema)));
-        }
-        
-        
-        photo.setProperty(*runtime_, "fileName", toJSIString([asset valueForKey:@"filename"]));
-        photo.setProperty(*runtime_, "id", toJSIString(asset.localIdentifier));
-        photo.setProperty(*runtime_, "modificationTime", [MediaLibrary _exportDate:asset.modificationDate]);
-        photo.setProperty(*runtime_, "mediaType", toJSIString([MediaLibrary _stringifyMediaType:asset.mediaType]));
-        photo.setProperty(*runtime_, "duration", asset.duration);
-        photo.setProperty(*runtime_, "width", (double)asset.pixelWidth);
-        photo.setProperty(*runtime_, "height", (double)asset.pixelHeight);
+        auto photo = fromPHAssetToValue(asset, requestUrls);
         photosResult.setValueAtIndex(*runtime_, i, photo);
     }
     
@@ -155,21 +201,19 @@ jsi::Value fetchAssets(const jsi::Value *args) {
         return fetchAssets(args);
     });
     
-    auto getAssetUrl = JSI_HOST_FUNCTION("getAssetUrl", 1) {
-        auto _id = [[NSString alloc] initWithCString:args[0].asString(runtime).utf8(runtime).c_str() encoding:NSUTF8StringEncoding];
+    auto getAsset = JSI_HOST_FUNCTION("getAsset", 1) {
+        auto _id = toString(args[0].asString(runtime));
         
         PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
-        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
         auto asset = fetchAssetById(_id);
         if (asset == nil) return jsi::Value::undefined();
-        auto url = _requestUrl(asset, options, sema);
-        return toJSIString(url);
+        return fromPHAssetToValue(asset, true);
     });
 
 
     auto exportModule = jsi::Object(*runtime_);
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
-    exportModule.setProperty(*runtime_, "getAssetUrl", std::move(getAssetUrl));
+    exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

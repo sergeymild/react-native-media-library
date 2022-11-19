@@ -10,24 +10,24 @@ import com.facebook.react.module.annotations.ReactModule;
 
 @ReactModule(name = MediaLibraryModule.NAME)
 public class MediaLibraryModule extends ReactContextBaseJavaModule {
-    public static final String NAME = "MediaLibrary";
+  public static final String NAME = "MediaLibrary";
+  private MediaLibrary mediaLibrary;
 
-    public MediaLibraryModule(ReactApplicationContext reactContext) {
-        super(reactContext);
-    }
+  public MediaLibraryModule(ReactApplicationContext reactContext) {
+    super(reactContext);
+    mediaLibrary = new MediaLibrary(reactContext);
+  }
 
-    @Override
-    @NonNull
-    public String getName() {
-        return NAME;
-    }
+  @Override
+  @NonNull
+  public String getName() {
+    return NAME;
+  }
 
 
-    // Example method
-    // See https://reactnative.dev/docs/native-modules-android
-    @ReactMethod
-    public void multiply(double a, double b, Promise promise) {
-        promise.resolve(a * b);
-    }
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  public void install() {
+    mediaLibrary.install(getReactApplicationContext());
+  }
 
 }

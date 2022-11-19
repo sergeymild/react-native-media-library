@@ -3,9 +3,12 @@ import * as React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
 import { useState } from 'react';
+import FastImage from 'react-native-fast-image';
 
 export default function App() {
   const [image, setImage] = useState();
+
+  console.log('[App.App]', image);
 
   return (
     <View style={styles.container}>
@@ -15,22 +18,32 @@ export default function App() {
           const start = Date.now();
           const assets = mediaLibrary.getAssets({
             requestUrls: false,
+            limit: 3,
+            mediaType: ['photo'],
+            extensions: ['jpg'],
+            sortBy: 'creationTime',
+            sortOrder: 'asc',
           });
           const end = start - Date.now();
-          console.log('[App.]', JSON.stringify(assets, undefined, 2));
+          // console.log('[App.]', JSON.stringify(assets, undefined, 2));
           console.log(
             '[App.]',
             assets.length,
-            end,
-            mediaLibrary.getAssetUrl(assets[0].id)
+            assets[0],
+            end
+            //mediaLibrary.getAssetUrl(assets[0].id)
           );
-          // setImage(assets[2].url);
+          console.log('[App.]', mediaLibrary.getAsset(assets[0].id));
+          setImage(assets[1].uri);
         }}
       >
         <Text>Photos</Text>
       </TouchableOpacity>
       {!!image && (
-        <Image source={{ uri: image }} style={{ width: 100, height: 100 }} />
+        <FastImage
+          source={{ uri: image }}
+          style={{ width: 100, height: 100, backgroundColor: 'red' }}
+        />
       )}
     </View>
   );
