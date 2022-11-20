@@ -90,7 +90,7 @@ public class MediaLibraryUtils {
       newFile = new File(destDir, filename + "_" + suffix + extension);
       suffix++;
       if (suffix > suffixLimit) {
-        return errorJson("File name suffix limit reached.");
+        return "E_FILE_NAME_SUFFIX_REACHED";
       }
     }
 
@@ -99,7 +99,7 @@ public class MediaLibraryUtils {
         long transferred = input.transferTo(0, input.size(), output);
         if (transferred != input.size()) {
           newFile.delete();
-          return errorJson("Could not save file to " + destDir);
+          return "E_COULD_NOT_SAVE_FILE";
         }
       }
     }

@@ -35,13 +35,10 @@ buildscript {
 
 apply plugin: 'com.android.library'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'kotlin-android'
 
 def getExtOrDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['MediaLibrary_' + name]
-}
-
-def getExtOr(defaulT) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : defaulT
 }
 
 def safeExtGet(prop, fallback) {
@@ -170,6 +167,8 @@ repositories {
 dependencies {
   // noinspection GradleDynamicVersion
   implementation 'com.facebook.react:react-native:+'
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${getExtOrDefault('coroutines')}"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:${getExtOrDefault('kotlin_version')}"
   //noinspection GradleDynamicVersion
   extractHeaders("com.facebook.fbjni:fbjni:+:headers")
   //noinspection GradleDynamicVersion

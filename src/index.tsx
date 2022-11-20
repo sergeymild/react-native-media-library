@@ -30,8 +30,7 @@ declare global {
       callback: (item: AssetItem[]) => void
     ): void;
     saveToLibrary(
-      localUrl: string,
-      album: string,
+      params: SaveToLibrary,
       callback: (item: AssetItem | string) => void
     ): void;
   };
@@ -44,6 +43,12 @@ interface Options {
   extensions?: string[];
   requestUrls?: boolean;
   limit?: number;
+  offset?: number;
+}
+
+interface SaveToLibrary {
+  localUrl: string;
+  album?: string;
 }
 
 export type MediaType = 'photo' | 'video' | 'audio' | 'unknown';
@@ -73,6 +78,7 @@ export const mediaLibrary = {
       extensions: options?.extensions,
       requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
+      offset: options?.offset,
     };
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(
@@ -88,11 +94,9 @@ export const mediaLibrary = {
     });
   },
 
-  saveToLibrary(localUrl: string, album?: string) {
+  saveToLibrary(params: SaveToLibrary) {
     return new Promise((resolve) => {
-      __mediaLibrary.saveToLibrary(localUrl, album ?? '', (response) =>
-        resolve(response)
-      );
+      __mediaLibrary.saveToLibrary(params, (response) => resolve(response));
     });
   },
 };
