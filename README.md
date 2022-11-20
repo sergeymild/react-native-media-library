@@ -1,10 +1,33 @@
 # react-native-media-library
-De
+React Native JSI access to user's media library
+
+
+### Configure for iOS
+Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys to your Info.plist:
+
+```ts
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Give $(PRODUCT_NAME) permission to access your photos</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>Give $(PRODUCT_NAME) permission to save photos</string>
+```
+
+### Configure for Android
+This package automatically adds the `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` permissions. They are used when accessing the user's images or videos.
+
+```ts
+<!-- Added permissions -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
+
 ## Installation
 
 ```sh
+add this line to `package.json`
 "react-native-media-library": "sergeymild/react-native-media-library#0.0.1"
 yarn
+npx pod-install
 ```
 
 ## Usage
