@@ -28,10 +28,8 @@ NSString *const AssetMediaTypePhoto = @"photo";
 NSString *const AssetMediaTypeVideo = @"video";
 NSString *const AssetMediaTypeUnknown = @"unknown";
 NSString *const AssetMediaTypeAll = @"all";
-dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
 SaveToCameraRoll *saveToCameraRoll;
-
 dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 + (BOOL)requiresMainQueueSetup
@@ -152,9 +150,11 @@ PHAsset* fetchAssetById(NSString* _id) {
 }
 
 NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *options) {
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString *url = @"";
     if (asset.mediaType == PHAssetMediaTypeImage) {
-        [asset requestContentEditingInputWithOptions:options completionHandler:^(PHContentEditingInput * _Nullable contentEditingInput, NSDictionary * _Nonnull info) {
+        [asset requestContentEditingInputWithOptions: options
+                                   completionHandler:^(PHContentEditingInput * _Nullable contentEditingInput, NSDictionary * _Nonnull info) {
             url = [contentEditingInput.fullSizeImageURL absoluteString];
             dispatch_semaphore_signal(sema);
         }];
@@ -248,7 +248,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         }
         
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-       
+
         dispatch_async(defQueue, ^{
             json::array results;
             fetchAssets(&results, limit, sortBy, sortOrder);
@@ -266,7 +266,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = toString(args[0].asString(runtime));
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         dispatch_async(defQueue, ^{
             PHAsset* asset = fetchAssetById(_id);
             std::string resultString = "";
@@ -286,30 +286,49 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
         });
-
-        
-        
-        //fromPHAssetToValue(asset, true)
         return jsi::Value::undefined();
     });
     
-    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 2) {
+    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 3) {
         auto localUri = toString(args[0].asString(runtime));
         NSString* album = @"";
         if (!args[1].isUndefined() && !args[1].isNull() && args[1].isString()) {
             album = toString(args[1].asString(runtime));
         }
-        
-        [saveToCameraRoll saveToCameraRoll:localUri
-                                     album:album
-                                  callback:^(NSString * _Nullable error, NSString * _Nullable success) {
-            if (error) {
-                return NSLog(@"----- %@", error);
-            }
-            auto asset = fetchAssetById(success);
-            //fromPHAssetToValue(asset, true);
-            return NSLog(@"-----111 %@", success);
-        }];
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[2]);
+        dispatch_async(defQueue, ^{
+            [saveToCameraRoll saveToCameraRoll:localUri
+                                         album:album
+                                      callback:^(NSString * _Nullable error, NSString * _Nullable _id) {
+                
+                dispatch_async(defQueue, ^{
+                   
+                    std::string resultString = "";
+                    std::string errorString = "";
+                    if (error) {
+                        errorString = toCString(error);
+                    } else {
+                        PHAsset* asset = fetchAssetById(_id);
+                        if (asset != nil) {
+                            json::object object;
+                            fromPHAssetToValue(asset, &object, true);
+                            resultString = json::stringify(object);
+                        }
+                    }
+                    
+                    _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
+                        if (err.size() > 0) {
+                            resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
+                            return;
+                        }
+                        auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                        auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                        resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+                    });
+                    
+                });
+            }];
+        });
         
         return jsi::Value::undefined();
     });

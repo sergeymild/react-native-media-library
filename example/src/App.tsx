@@ -18,17 +18,19 @@ export default function App() {
           const start = Date.now();
           // console.log(
           //   '[App.save]',
-          //   mediaLibrary.saveToLibrary(
-          //     `/data/user/0/com.example.reactnativemedialibrary/files/2222.jpg`
-          //   )
           // );
-          const response = await mediaLibrary.getAssets();
-          const assetResponse = await mediaLibrary.getAsset(
-            '106E99A1-4F6A-45A2-B320-B0AD4A8E8473/L0/001'
+          const saveResponse = await mediaLibrary.saveToLibrary(
+            // `/data/user/0/com.example.reactnativemedialibrary/files/2222.jpg`
+            `${__mediaLibrary.docDir()}/ls.jpg`
           );
+          console.log('[App.save]', saveResponse);
+          // const response = await mediaLibrary.getAssets();
+          // const assetResponse = await mediaLibrary.getAsset(
+          //   '106E99A1-4F6A-45A2-B320-B0AD4A8E8473/L0/001'
+          // );
 
-          console.log('[App.]', assetResponse);
-          console.log('[App.]', response.length);
+          // console.log('[App.]', assetResponse);
+          // console.log('[App.]', response.length);
           //mediaLibrary.saveToLibrary(`${__mediaLibrary.docDir()}/ls.jpg`);
           // const assets = mediaLibrary.getAssets({
           //   requestUrls: false,
