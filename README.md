@@ -3,17 +3,53 @@ De
 ## Installation
 
 ```sh
-npm install react-native-media-library
+"react-native-media-library": "sergeymild/react-native-media-library#0.0.1"
+yarn
 ```
 
 ## Usage
 
 ```js
-import { multiply } from "react-native-media-library";
+import { mediaLibrary } from "react-native-media-library";
 
 // ...
 
-const result = await multiply(3, 7);
+interface Options {
+  mediaType?: MediaType[];
+  sortBy?: 'creationTime' | 'modificationTime';
+  sortOrder?: 'asc' | 'desc';
+  extensions?: string[];
+  requestUrls?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+interface SaveToLibrary {
+  localUrl: string;
+  album?: string;
+}
+
+export type MediaType = 'photo' | 'video' | 'audio' | 'unknown';
+export interface AssetItem {
+  readonly filename: string;
+  readonly id: string;
+  readonly creationTime: number;
+  readonly modificationTime: number;
+  readonly mediaType: MediaType;
+  readonly duration: number;
+  readonly width: number;
+  readonly height: number;
+  readonly uri: string;
+}
+
+export interface FullAssetItem extends AssetItem {
+  readonly url: string;
+}
+
+mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
+mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
+// will return save asset or error string
+mediaLibrary.saveToLibrary(params: SaveToLibrary): Promise<FullAssetItem | string>
 ```
 
 ## Contributing

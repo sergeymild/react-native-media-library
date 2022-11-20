@@ -62,7 +62,6 @@ export interface AssetItem {
   readonly width: number;
   readonly height: number;
   readonly uri: string;
-  readonly url?: string;
 }
 
 export interface FullAssetItem extends AssetItem {
