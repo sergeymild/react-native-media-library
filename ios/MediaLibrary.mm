@@ -11,6 +11,9 @@
 
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
+#import "SaveToCameraRoll.h"
+#import "json.h"
+
 
 using namespace facebook;
 
@@ -18,6 +21,7 @@ using namespace facebook;
 RCT_EXPORT_MODULE()
 
 jsi::Runtime* runtime_;
+RCTBridge *_bridge;
 
 NSString *const AssetMediaTypeAudio = @"audio";
 NSString *const AssetMediaTypePhoto = @"photo";
@@ -26,6 +30,10 @@ NSString *const AssetMediaTypeUnknown = @"unknown";
 NSString *const AssetMediaTypeAll = @"all";
 dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
+SaveToCameraRoll *saveToCameraRoll;
+
+dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
 + (BOOL)requiresMainQueueSetup
 {
   return FALSE;
@@ -33,12 +41,14 @@ dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     NSLog(@"Installing MediaLibrary polyfill Bindings...");
-    auto _bridge = [RCTBridge currentBridge];
+    _bridge = [RCTBridge currentBridge];
     auto _cxxBridge = (RCTCxxBridge*)_bridge;
     if (_cxxBridge == nil) return @false;
     runtime_ = (jsi::Runtime*) _cxxBridge.runtime;
     if (runtime_ == nil) return @false;
     [self installJSIBindings];
+    
+    saveToCameraRoll = [[SaveToCameraRoll alloc] init];
     
 
     return @true;
@@ -46,6 +56,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
 jsi::String toJSIString(NSString *value) {
   return jsi::String::createFromUtf8(*runtime_, [value UTF8String] ?: "");
+}
+
+const char* toCString(NSString *value) {
+    return [value cStringUsingEncoding:NSUTF8StringEncoding];
 }
 
 NSString* toString(jsi::String value) {
@@ -157,47 +171,34 @@ NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *optio
     return url;
 }
 
-jsi::Value fromPHAssetToValue(PHAsset *asset, bool requestUrls) {
-    auto object = jsi::Object(*runtime_);
+void fromPHAssetToValue(PHAsset *asset, json::object *object, bool isFull) {
+    object->insert("fileName", toCString([asset valueForKey:@"filename"]));
+    object->insert("id", toCString(asset.localIdentifier));
+    object->insert("creationTime", [MediaLibrary _exportDate:asset.creationDate]);
+    object->insert("modificationTime", [MediaLibrary _exportDate:asset.modificationDate]);
+    object->insert("mediaType", toCString([MediaLibrary _stringifyMediaType:asset.mediaType]));
+    object->insert("duration", asset.duration);
+    object->insert("width", (double)asset.pixelWidth);
+    object->insert("height", (double)asset.pixelHeight);
+    object->insert("uri", toCString([MediaLibrary _toSdUrl:asset.localIdentifier]));
     
-    if (requestUrls) {
+    if (isFull) {
         PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
-        object.setProperty(*runtime_, "url", toJSIString(_requestUrl(asset, options)));
+        object->insert("url", toCString(_requestUrl(asset, options)));
     }
-    
-    object.setProperty(*runtime_, "fileName", toJSIString([asset valueForKey:@"filename"]));
-    object.setProperty(*runtime_, "id", toJSIString(asset.localIdentifier));
-    object.setProperty(*runtime_, "creationTime", [MediaLibrary _exportDate:asset.creationDate]);
-    object.setProperty(*runtime_, "modificationTime", [MediaLibrary _exportDate:asset.modificationDate]);
-    object.setProperty(*runtime_, "mediaType", toJSIString([MediaLibrary _stringifyMediaType:asset.mediaType]));
-    object.setProperty(*runtime_, "duration", asset.duration);
-    object.setProperty(*runtime_, "width", (double)asset.pixelWidth);
-    object.setProperty(*runtime_, "height", (double)asset.pixelHeight);
-    object.setProperty(*runtime_, "uri", toJSIString([MediaLibrary _toSdUrl:asset.localIdentifier]));
-    return object;
 }
 
-jsi::Value fetchAssets(const jsi::Value *args) {
-//    fetchAssetGroups();
-    auto params = args[0].asObject(*runtime_);
-    bool requestUrls = params.getProperty(*runtime_, "requestUrls").getBool();
+void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NSString* _Nullable sortOrder) {
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
-    
-    // limit
-    auto limit = params.getProperty(*runtime_, "limit");
-    if (!limit.isUndefined()) {
-        fetchOptions.fetchLimit = limit.asNumber();
-    }
+
+    if (limit > 0) fetchOptions.fetchLimit = limit;
     
     // sort
-    auto sortBy = params.getProperty(*runtime_, "sortBy");
-    auto sortOrder = params.getProperty(*runtime_, "sortOrder");
-    if (!sortBy.isUndefined()) {
-        auto sortKey = toString(sortBy.asString(*runtime_));
-        if ([sortKey isEqual: @"creationTime"] || [sortKey  isEqual: @"modificationTime"]) {
+    if (sortBy != NULL && ![sortBy isEqualToString:@""]) {
+        if ([sortBy isEqualToString: @"creationTime"] || [sortBy isEqualToString: @"modificationTime"]) {
             bool ascending = false;
-            auto key = [sortKey isEqual: @"creationTime"] ? @"creationDate" : @"modificationDate";
-            if (sortOrder.asString(*runtime_).utf8(*runtime_) == "asc") {
+            auto key = [sortBy isEqual: @"creationTime"] ? @"creationDate" : @"modificationDate";
+            if (sortOrder != NULL && [sortOrder isEqualToString:@"asc"]) {
                 ascending = true;
             }
             fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
@@ -207,85 +208,110 @@ jsi::Value fetchAssets(const jsi::Value *args) {
     fetchOptions.includeAllBurstAssets = false;
     fetchOptions.includeHiddenAssets = false;
     auto result = [PHAsset fetchAssetsWithOptions:fetchOptions];
-    
-    auto photosResult = jsi::Array(*runtime_, result.count);
+
+    results->reserve(result.count);
     
     
     for (int i = 0; i < result.count; i++) {
         PHAsset* asset = [result objectAtIndex:i];
-        
-        auto photo = fromPHAssetToValue(asset, requestUrls);
-        photosResult.setValueAtIndex(*runtime_, i, photo);
+        json::object object;
+        fromPHAssetToValue(asset, &object, false);
+        results->push_back(object);
     }
-    
-    return photosResult;
+
 }
 
 -(void)installJSIBindings {
     
     auto docDir = JSI_HOST_FUNCTION("docDir", 1) {
         auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+        NSLog(@"===== %@", paths);
         return toJSIString(paths);
     });
     
-    auto getAssets = JSI_HOST_FUNCTION("getAssets", 1) {
-        auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
-        NSLog(@"===== %@", paths);
+    auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
+        int limit = -1;
+        NSString *sortBy = NULL;
+        NSString *sortOrder = NULL;
+        
+        auto params = args[0].asObject(runtime);
+        auto rawLimit = params.getProperty(*runtime_, "limit");
+        auto rawSortBy = params.getProperty(*runtime_, "sortBy");
+        auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
+        if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
+        if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
+            sortBy = toString(rawSortBy.asString(runtime));
+        }
+        
+        if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
+            sortOrder = toString(rawSortOrder.asString(runtime));
+        }
+        
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+       
+        dispatch_async(defQueue, ^{
+            json::array results;
+            fetchAssets(&results, limit, sortBy, sortOrder);
+            std::string resultString = json::stringify(results);
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+            });
+        });
 
-        return fetchAssets(args);
+        return jsi::Value::undefined();
     });
     
-    auto getAsset = JSI_HOST_FUNCTION("getAsset", 1) {
+    auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = toString(args[0].asString(runtime));
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        dispatch_async(defQueue, ^{
+            PHAsset* asset = fetchAssetById(_id);
+            std::string resultString = "";
+            if (asset != nil) {
+                json::object object;
+                fromPHAssetToValue(asset, &object, true);
+                resultString = json::stringify(object);
+            }
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
+                if (data.size() == 0) {
+                    resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
+                    return;
+                }
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+            });
+        });
 
-        auto asset = fetchAssetById(_id);
-        if (asset == nil) return jsi::Value::undefined();
-        return fromPHAssetToValue(asset, true);
+        
+        
+        //fromPHAssetToValue(asset, true)
+        return jsi::Value::undefined();
     });
     
-    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 1) {
+    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 2) {
         auto localUri = toString(args[0].asString(runtime));
-        
-        if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSPhotoLibraryAddUsageDescription"] == nil) {
-            return toJSIString(@"E_NO_PERMISSIONS This app is missing NSPhotoLibraryAddUsageDescription. Add this entry to your bundle's Info.plist.");
+        NSString* album = @"";
+        if (!args[1].isUndefined() && !args[1].isNull() && args[1].isString()) {
+            album = toString(args[1].asString(runtime));
         }
         
-        if ([[localUri pathExtension] length] == 0) {
-            return toJSIString(@"E_NO_FILE_EXTENSION Could not get the file's extension.");
-        }
-        
-        PHAssetMediaType assetType = [MediaLibrary _assetTypeForUri:localUri];
-        if (assetType == PHAssetMediaTypeUnknown || assetType == PHAssetMediaTypeAudio) {
-            return toJSIString(@"E_UNSUPPORTED_ASSET This file type is not supported yet");
-        }
-        
-        NSURL *assetUrl = [MediaLibrary _normalizeAssetURLFromUri:localUri];
-        if (assetUrl == nil) {
-            return toJSIString(@"E_INVALID_URI Provided localUri is not a valid URI");
-        }
-        
-        __block PHAsset *createdAsset;
-        __block PHObjectPlaceholder *assetPlaceholder;
-        [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-            PHAssetChangeRequest *changeRequest = assetType == PHAssetMediaTypeVideo
-            ? [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:assetUrl]
-            : [PHAssetChangeRequest creationRequestForAssetFromImageAtFileURL:assetUrl];
-            
-            assetPlaceholder = changeRequest.placeholderForCreatedAsset;
-            
-        } completionHandler:^(BOOL success, NSError *error) {
-            if (success) {
-                createdAsset = fetchAssetById(assetPlaceholder.localIdentifier);
-            } else {
-                NSLog(@"E_ASSET_SAVE_FAILED %@ %@", @"Asset couldn't be saved to photo library", error);
+        [saveToCameraRoll saveToCameraRoll:localUri
+                                     album:album
+                                  callback:^(NSString * _Nullable error, NSString * _Nullable success) {
+            if (error) {
+                return NSLog(@"----- %@", error);
             }
-            dispatch_semaphore_signal(sema);
+            auto asset = fetchAssetById(success);
+            //fromPHAssetToValue(asset, true);
+            return NSLog(@"-----111 %@", success);
         }];
         
-        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
-        
-        if (createdAsset == nil) return jsi::Value(false);
-        return fromPHAssetToValue(createdAsset, true);
+        return jsi::Value::undefined();
     });
 
 

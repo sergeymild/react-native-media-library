@@ -14,7 +14,7 @@ export default function App() {
     <View style={styles.container}>
       <TouchableOpacity
         style={{ height: 50 }}
-        onPress={() => {
+        onPress={async () => {
           const start = Date.now();
           // console.log(
           //   '[App.save]',
@@ -22,18 +22,26 @@ export default function App() {
           //     `/data/user/0/com.example.reactnativemedialibrary/files/2222.jpg`
           //   )
           // );
-          const assets = mediaLibrary.getAssets({
-            requestUrls: false,
-            limit: 1,
-            mediaType: ['photo'],
-            extensions: ['jpg'],
-            sortBy: 'creationTime',
-            sortOrder: 'asc',
-          });
-          console.log(
-            '[App.]',
-            assets.map((e) => e.creationTime)
+          const response = await mediaLibrary.getAssets();
+          const assetResponse = await mediaLibrary.getAsset(
+            '106E99A1-4F6A-45A2-B320-B0AD4A8E8473/L0/001'
           );
+
+          console.log('[App.]', assetResponse);
+          console.log('[App.]', response.length);
+          //mediaLibrary.saveToLibrary(`${__mediaLibrary.docDir()}/ls.jpg`);
+          // const assets = mediaLibrary.getAssets({
+          //   requestUrls: false,
+          //   limit: 1,
+          //   mediaType: ['photo'],
+          //   extensions: ['jpg'],
+          //   sortBy: 'creationTime',
+          //   sortOrder: 'asc',
+          // });
+          // console.log(
+          //   '[App.]',
+          //   assets.map((e) => e.creationTime)
+          // );
           // const end = start - Date.now();
           // // console.log('[App.]', JSON.stringify(assets, undefined, 2));
           // console.log(

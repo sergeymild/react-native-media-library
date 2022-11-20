@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
+		92C03C732929F7440068151A /* SaveToCameraRoll.m in Sources */ = {isa = PBXBuildFile; fileRef = 92C03C722929F7440068151A /* SaveToCameraRoll.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,6 +27,9 @@
 		134814201AA4EA6300B7C361 /* libMediaLibrary.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMediaLibrary.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaLibrary.mm; sourceTree = "<group>"; };
 		929FAD112928DB74000DF958 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
+		92C03C712929F7440068151A /* SaveToCameraRoll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRoll.h; sourceTree = "<group>"; };
+		92C03C722929F7440068151A /* SaveToCameraRoll.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRoll.m; sourceTree = "<group>"; };
+		92C03C74292A051A0068151A /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MediaLibrary.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -51,8 +55,11 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				92C03C712929F7440068151A /* SaveToCameraRoll.h */,
+				92C03C722929F7440068151A /* SaveToCameraRoll.m */,
 				B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */,
 				929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */,
+				92C03C74292A051A0068151A /* json.h */,
 				929FAD112928DB74000DF958 /* Macros.h */,
 				134814211AA4EA7D00B7C361 /* Products */,
 			);
@@ -116,6 +123,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */,
+				92C03C732929F7440068151A /* SaveToCameraRoll.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -229,12 +230,14 @@ public class MediaLibrary {
   String getAssets(String params) throws JSONException, IOException {
     ContentResolver contentResolver = context.getContentResolver();
     JSONObject input = new JSONObject(params);
+    Bundle bundle = new Bundle();
+    bundle.putInt(ContentResolver.QUERY_ARG_LIMIT, 1);
+
     try (Cursor cursor = contentResolver.query(
       EXTERNAL_CONTENT_URI,
       ASSET_PROJECTION,
-      createSelectionString(input),
-      null,
-      sortBy(input))) {
+      bundle,
+      null)) {
 
       JSONArray array = new JSONArray();
 

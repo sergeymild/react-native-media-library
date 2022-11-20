@@ -21,9 +21,19 @@ MediaLibrary.install();
 
 declare global {
   var __mediaLibrary: {
-    getAsset(id: string): FullAssetItem;
-    getAssets(options?: Options | string): AssetItem[];
-    saveToLibrary(localUrl: string): AssetItem | string;
+    getAsset(
+      id: string,
+      callback: (item: FullAssetItem | undefined) => void
+    ): void;
+    getAssets(
+      options: Options | string,
+      callback: (item: AssetItem[]) => void
+    ): void;
+    saveToLibrary(
+      localUrl: string,
+      album: string,
+      callback: (item: AssetItem | string) => void
+    ): void;
   };
 }
 
@@ -55,7 +65,7 @@ export interface FullAssetItem extends AssetItem {
 }
 
 export const mediaLibrary = {
-  getAssets(options?: Options): AssetItem[] {
+  getAssets(options?: Options): Promise<AssetItem[]> {
     const params = {
       mediaType: options?.mediaType,
       sortBy: options?.sortBy,
@@ -64,16 +74,25 @@ export const mediaLibrary = {
       requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
     };
-    return __mediaLibrary.getAssets(
-      Platform.OS === 'android' ? JSON.stringify(params) : params
-    );
+    return new Promise<AssetItem[]>((resolve) => {
+      __mediaLibrary.getAssets(
+        Platform.OS === 'android' ? JSON.stringify(params) : params,
+        (response) => resolve(response)
+      );
+    });
   },
 
-  getAsset(id: string): FullAssetItem {
-    return __mediaLibrary.getAsset(id);
+  getAsset(id: string): Promise<FullAssetItem | undefined> {
+    return new Promise<FullAssetItem | undefined>((resolve) => {
+      __mediaLibrary.getAsset(id, (response) => resolve(response));
+    });
   },
 
-  saveToLibrary(localUrl: string): AssetItem | string {
-    return __mediaLibrary.saveToLibrary(localUrl);
+  saveToLibrary(localUrl: string, album?: string) {
+    return new Promise((resolve) => {
+      __mediaLibrary.saveToLibrary(localUrl, album ?? '', (response) =>
+        resolve(response)
+      );
+    });
   },
 };
