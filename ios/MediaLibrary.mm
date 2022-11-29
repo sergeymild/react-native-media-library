@@ -20,9 +20,6 @@ using namespace facebook;
 @implementation MediaLibrary
 RCT_EXPORT_MODULE()
 
-jsi::Runtime* runtime_;
-RCTBridge *_bridge;
-
 NSString *const AssetMediaTypeAudio = @"audio";
 NSString *const AssetMediaTypePhoto = @"photo";
 NSString *const AssetMediaTypeVideo = @"video";
@@ -39,12 +36,12 @@ dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DE
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     NSLog(@"Installing MediaLibrary polyfill Bindings...");
-    _bridge = [RCTBridge currentBridge];
+    auto _bridge = [RCTBridge currentBridge];
     auto _cxxBridge = (RCTCxxBridge*)_bridge;
     if (_cxxBridge == nil) return @false;
-    runtime_ = (jsi::Runtime*) _cxxBridge.runtime;
+    auto runtime_ = (jsi::Runtime*) _cxxBridge.runtime;
     if (runtime_ == nil) return @false;
-    [self installJSIBindings];
+    [self installJSIBindings:_bridge runtime:runtime_];
     
     saveToCameraRoll = [[SaveToCameraRoll alloc] init];
     
@@ -52,7 +49,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     return @true;
 }
 
-jsi::String toJSIString(NSString *value) {
+jsi::String toJSIString(NSString *value, jsi::Runtime* runtime_) {
   return jsi::String::createFromUtf8(*runtime_, [value UTF8String] ?: "");
 }
 
@@ -60,7 +57,7 @@ const char* toCString(NSString *value) {
     return [value cStringUsingEncoding:NSUTF8StringEncoding];
 }
 
-NSString* toString(jsi::String value) {
+NSString* toString(jsi::String value, jsi::Runtime* runtime_) {
     return [[NSString alloc] initWithCString:value.utf8(*runtime_).c_str() encoding:NSUTF8StringEncoding];
 }
 
@@ -128,9 +125,9 @@ NSString* toString(jsi::String value) {
     return [[NSURL URLWithString:[NSString stringWithFormat:@"ph://%@", localId]] absoluteString];
 }
 
-NSSortDescriptor* _sortDescriptorFrom(jsi::Value sortBy, jsi::Value sortOrder)
+NSSortDescriptor* _sortDescriptorFrom(jsi::Runtime* runtime_, jsi::Value sortBy, jsi::Value sortOrder)
 {
-    auto sortKey = toString(sortBy.asString(*runtime_));
+    auto sortKey = toString(sortBy.asString(*runtime_), runtime_);
     if ([sortKey  isEqual: @"creationTime"] || [sortKey  isEqual: @"modificationTime"]) {
         bool ascending = false;
         if (!sortOrder.isUndefined() && sortOrder.asString(*runtime_).utf8(*runtime_) == "asc") {
@@ -221,12 +218,12 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 
 }
 
--(void)installJSIBindings {
+-(void)installJSIBindings:(RCTBridge *) _bridge runtime:(jsi::Runtime*)runtime_ {
     
     auto docDir = JSI_HOST_FUNCTION("docDir", 1) {
         auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
         NSLog(@"===== %@", paths);
-        return toJSIString(paths);
+        return toJSIString(paths, &runtime);
     });
     
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
@@ -240,11 +237,11 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
         if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
-            sortBy = toString(rawSortBy.asString(runtime));
+            sortBy = toString(rawSortBy.asString(runtime), &runtime);
         }
         
         if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
-            sortOrder = toString(rawSortOrder.asString(runtime));
+            sortOrder = toString(rawSortOrder.asString(runtime), &runtime);
         }
         
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -264,7 +261,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     });
     
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
-        auto _id = toString(args[0].asString(runtime));
+        auto _id = toString(args[0].asString(runtime), &runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
 
         dispatch_async(defQueue, ^{
@@ -289,13 +286,15 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         return jsi::Value::undefined();
     });
     
-    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 3) {
-        auto localUri = toString(args[0].asString(runtime));
+    auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 2) {
+        auto params = args[0].asObject(runtime);
+        auto localUri = toString(params.getProperty(runtime, "localUrl").asString(runtime), &runtime);
         NSString* album = @"";
-        if (!args[1].isUndefined() && !args[1].isNull() && args[1].isString()) {
-            album = toString(args[1].asString(runtime));
+        auto rawAlbum = params.getProperty(runtime, "album");
+        if (!rawAlbum.isUndefined() && !rawAlbum.isNull() && rawAlbum.isString()) {
+            album = toString(rawAlbum.asString(runtime), &runtime);
         }
-        auto resolve = std::make_shared<jsi::Value>(runtime, args[2]);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
         dispatch_async(defQueue, ^{
             [saveToCameraRoll saveToCameraRoll:localUri
                                          album:album

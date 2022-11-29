@@ -1,9 +1,40 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  PermissionsAndroid,
+} from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
 import { useState } from 'react';
 import FastImage from 'react-native-fast-image';
+
+const requestCameraPermission = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      'android.permission.READ_EXTERNAL_STORAGE',
+      {
+        title: 'Cool Photo App Camera Permission',
+        message:
+          'Cool Photo App needs access to your camera ' +
+          'so you can take awesome pictures.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      }
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use the camera');
+    } else {
+      console.log('Camera permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
 
 export default function App() {
   const [image, setImage] = useState();
@@ -24,13 +55,15 @@ export default function App() {
           //   `${__mediaLibrary.docDir()}/ls.jpg`
           // );
           // console.log('[App.save]', saveResponse);
+
+          requestCameraPermission();
           const response = await mediaLibrary.getAssets({});
           // const assetResponse = await mediaLibrary.getAsset(response[0].id);
 
           // console.log('[App.]', assetResponse);
           console.log(
             '[App.]',
-            response.map((a) => a.id)
+            response.map((a) => a)
           );
           // const saveR = await mediaLibrary.saveToLibrary({
           //   // localUrl: `${__mediaLibrary.docDir()}/ls.jpg`,
