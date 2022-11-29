@@ -178,6 +178,12 @@ void fromPHAssetToValue(PHAsset *asset, json::object *object, bool isFull) {
     object->insert("width", (double)asset.pixelWidth);
     object->insert("height", (double)asset.pixelHeight);
     object->insert("uri", toCString([MediaLibrary _toSdUrl:asset.localIdentifier]));
+    if (asset.location != NULL) {
+        json::object location;
+        location.insert("longitude", asset.location.coordinate.longitude);
+        location.insert("latitude", asset.location.coordinate.latitude);
+        object->insert("location", location);
+    }
     
     if (isFull) {
         PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];

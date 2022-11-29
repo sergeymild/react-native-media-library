@@ -38,7 +38,12 @@ void MediaLibrary::installJSIBindings() {
 
 
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 1) {
-        auto params = jni::make_jstring(args[0].asString(runtime).utf8(runtime));
+       auto stringify = runtime.global()
+               .getPropertyAsObject(runtime, "JSON")
+               .getPropertyAsFunction(runtime, "stringify");
+       auto result = stringify.call(runtime, args[0]).asString(runtime).utf8(runtime);
+
+        auto params = jni::make_jstring(result);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
 
         auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("getAssets");

@@ -26,17 +26,17 @@ declare global {
       callback: (item: FullAssetItem | undefined) => void
     ): void;
     getAssets(
-      options: Options | string,
+      options: FetchAssetsOptions,
       callback: (item: AssetItem[]) => void
     ): void;
     saveToLibrary(
       params: SaveToLibrary,
-      callback: (item: AssetItem | string) => void
+      callback: (item: AssetItem) => void
     ): void;
   };
 }
 
-interface Options {
+export interface FetchAssetsOptions {
   mediaType?: MediaType[];
   sortBy?: 'creationTime' | 'modificationTime';
   sortOrder?: 'asc' | 'desc';
@@ -62,6 +62,7 @@ export interface AssetItem {
   readonly width: number;
   readonly height: number;
   readonly uri: string;
+  readonly location?: { latitude: number; longitude: number };
 }
 
 export interface FullAssetItem extends AssetItem {
@@ -69,7 +70,7 @@ export interface FullAssetItem extends AssetItem {
 }
 
 export const mediaLibrary = {
-  getAssets(options?: Options): Promise<AssetItem[]> {
+  getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
     const params = {
       mediaType: options?.mediaType,
       sortBy: options?.sortBy,
@@ -80,10 +81,7 @@ export const mediaLibrary = {
       offset: options?.offset,
     };
     return new Promise<AssetItem[]>((resolve) => {
-      __mediaLibrary.getAssets(
-        Platform.OS === 'android' ? JSON.stringify(params) : params,
-        (response) => resolve(response)
-      );
+      __mediaLibrary.getAssets(params, (response) => resolve(response));
     });
   },
 
@@ -94,7 +92,7 @@ export const mediaLibrary = {
   },
 
   saveToLibrary(params: SaveToLibrary) {
-    return new Promise((resolve) => {
+    return new Promise<AssetItem>((resolve) => {
       __mediaLibrary.saveToLibrary(params, (response) => resolve(response));
     });
   },

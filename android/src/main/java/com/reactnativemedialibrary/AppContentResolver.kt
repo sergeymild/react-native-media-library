@@ -30,23 +30,6 @@ var ASSET_PROJECTION = arrayOf(
   MediaStore.Images.Media.BUCKET_ID
 )
 
-private fun mediaTypeToInt(mediaType: String): Int {
-  return when (mediaType) {
-    "photo" -> MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
-    "audio" -> MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO
-    "video" -> MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
-    else -> MediaStore.Files.FileColumns.MEDIA_TYPE_NONE
-  }
-}
-
-private fun sortBy(input: JSONObject): String {
-  if (!input.has("sortBy")) return MediaStore.Images.Media.DEFAULT_SORT_ORDER
-  val sortBy = input.getString("sortBy")
-  return if (!input.has("sortOrder")) sortToColumnName(sortBy) else sortToColumnName(sortBy) + " " + input.getString(
-    "sortOrder"
-  )
-}
-
 private fun sortToColumnName(sort: String): String {
   if (sort == "creationTime") return MediaLibrary.dateAdded
   if (sort == "modificationTime") return MediaStore.Files.FileColumns.DATE_MODIFIED
@@ -63,15 +46,33 @@ fun Bundle.addLimitOffset(input: JSONObject) {
 @RequiresApi(Build.VERSION_CODES.O)
 fun Bundle.addSort(input: JSONObject) {
   // Sort function
-  putStringArray(     // <-- This should be an array. I spent a whole day trying to figure out what I was doing wrong
-    ContentResolver.QUERY_ARG_SORT_COLUMNS,
-    arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED)
-  )
+  var field = MediaStore.Files.FileColumns.DATE_MODIFIED
+  if (input.has("sortBy") && input.getString("sortBy") == "creationTime") {
+    field = MediaStore.Files.FileColumns.DATE_ADDED
+  }
+  putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(field))
 
-  putInt(
-    ContentResolver.QUERY_ARG_SORT_DIRECTION,
-    ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
-  )
+  var direction = ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
+  if (input.has("sortOrder") && input.getString("sortOrder") == "asc") {
+    direction = ContentResolver.QUERY_SORT_DIRECTION_ASCENDING
+  }
+
+  putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, direction)
+}
+
+
+fun addLegacySort(input: JSONObject) {
+  var field = MediaStore.Files.FileColumns.DATE_MODIFIED
+  if (input.has("sortBy") && input.getString("sortBy") == "creationTime") {
+    field = MediaStore.Files.FileColumns.DATE_ADDED
+  }
+
+  var direction = "DESC"
+  if (input.has("sortOrder") && input.getString("sortOrder") == "asc") {
+    direction = "ASC"
+  }
+
+  return "$field $direction"
 }
 
 fun ContentResolver.listQuery(
@@ -132,7 +133,7 @@ fun ContentResolver.makeQuery(
       }, null
     )
   } else {
-    var sortOrder = "${MediaStore.Files.FileColumns.DATE_MODIFIED} DESC"
+    var sortOrder = addLegacySort(input)
     if (limit > 0) sortOrder += " LIMIT $limit"
     if (offset > 0) sortOrder += " OFFSET $offset"
     // Get All data in Cursor by sorting in DESC order
