@@ -70,6 +70,10 @@ void MediaLibrary::installJSIBindings() {
          std::function<void(std::string)> wrapperOnChange =
          [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
              j->invokeAsync([r, data, resolve]() {
+                 if (data.empty()) {
+                     resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
+                     return;
+                 }
                  auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                  auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
                  resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
@@ -95,6 +99,10 @@ void MediaLibrary::installJSIBindings() {
        std::function<void(std::string)> wrapperOnChange =
        [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
            j->invokeAsync([r, data, resolve]() {
+               if (data.empty()) {
+                   resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
+                   return;
+               }
                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
                resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));

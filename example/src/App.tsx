@@ -16,15 +16,7 @@ const requestCameraPermission = async () => {
   try {
     const granted = await PermissionsAndroid.request(
       'android.permission.READ_EXTERNAL_STORAGE',
-      {
-        title: 'Cool Photo App Camera Permission',
-        message:
-          'Cool Photo App needs access to your camera ' +
-          'so you can take awesome pictures.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      }
+      'android.permission.ACCESS_MEDIA_LOCATION'
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log('You can use the camera');
@@ -58,13 +50,17 @@ export default function App() {
 
           requestCameraPermission();
           const response = await mediaLibrary.getAssets({});
-          // const assetResponse = await mediaLibrary.getAsset(response[0].id);
+          for (let assetItem of response) {
+            let newVar = await mediaLibrary.getAsset(assetItem.id);
+            console.log(
+              '[App.]',
+              newVar?.mediaType,
+              newVar?.width,
+              newVar?.height,
+              newVar?.duration
+            );
+          }
 
-          // console.log('[App.]', assetResponse);
-          console.log(
-            '[App.]',
-            response.map((a) => a)
-          );
           // const saveR = await mediaLibrary.saveToLibrary({
           //   // localUrl: `${__mediaLibrary.docDir()}/ls.jpg`,
           //   localUrl: `/data/user/0/com.example.reactnativemedialibrary/files/2222.jpg`,

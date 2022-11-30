@@ -62,11 +62,12 @@ export interface AssetItem {
   readonly width: number;
   readonly height: number;
   readonly uri: string;
-  readonly location?: { latitude: number; longitude: number };
 }
 
 export interface FullAssetItem extends AssetItem {
   readonly url: string;
+  // on android, it will be available only from API 24 (N)
+  readonly location?: { latitude: number; longitude: number };
 }
 
 export const mediaLibrary = {

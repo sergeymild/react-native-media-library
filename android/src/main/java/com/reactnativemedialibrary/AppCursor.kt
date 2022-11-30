@@ -3,9 +3,9 @@ package com.reactnativemedialibrary
 import android.content.ContentResolver
 import android.database.Cursor
 import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import com.reactnativemedialibrary.AssetItemKeys.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -19,9 +19,9 @@ private fun toSet(array: JSONArray): Set<String> {
 
 private fun exportMediaType(mediaType: Int): String {
   return when (mediaType) {
-    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE -> "photo"
-    MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO, MediaStore.Files.FileColumns.MEDIA_TYPE_PLAYLIST -> "audio"
-    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO -> "video"
+    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE -> AssetMediaType.photo.name
+    MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO, MediaStore.Files.FileColumns.MEDIA_TYPE_PLAYLIST -> AssetMediaType.audio.name
+    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO -> AssetMediaType.video.name
     else -> "unknown"
   }
 }
@@ -32,24 +32,21 @@ private fun getAssetDimensionsFromCursor(
   mediaType: Int,
   localUriColumnIndex: Int
 ): IntArray {
+  val size = IntArray(2)
   val uri = cursor.getString(localUriColumnIndex)
-  if (mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
-    val videoUri = Uri.parse("file://$uri")
-    contentResolver.openAssetFileDescriptor(videoUri, "r").use { r ->
-      MediaMetadataRetriever().use { retriever ->
-        retriever.setDataSource(r!!.fileDescriptor)
-        val videoWidth =
-          retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-        val videoHeight =
-          retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-        return intArrayOf(videoWidth!!.toInt(), videoHeight!!.toInt())
-      }
-    }
-  }
+
   val widthIndex = cursor.getColumnIndex(MediaStore.MediaColumns.WIDTH)
   val heightIndex = cursor.getColumnIndex(MediaStore.MediaColumns.HEIGHT)
   var width = cursor.getInt(widthIndex)
   var height = cursor.getInt(heightIndex)
+  val isNoWH = (width <= 0 || height <= 0)
+
+  if (isNoWH && mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
+    val videoUri = Uri.parse("file://$uri")
+    MediaLibraryUtils.retrieveWidthHeightFromMedia(contentResolver, videoUri, size)
+    if (size[0] > 0 && size[1] > 0) return size
+  }
+
   // If the image doesn't have the required information, we can get them from Bitmap.Options
   if (mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE && (width <= 0 || height <= 0)) {
     val options = BitmapFactory.Options()
@@ -60,7 +57,6 @@ private fun getAssetDimensionsFromCursor(
   }
   return intArrayOf(width, height)
 }
-
 
 fun Cursor.mapToJson(
   contentResolver: ContentResolver,
@@ -92,16 +88,16 @@ fun Cursor.mapToJson(
     val widthHeight =
       getAssetDimensionsFromCursor(this, contentResolver, mediaType, localUriIndex)
     val `object` = JSONObject()
-    `object`.put("filename", getString(filenameIndex))
-    `object`.put("id", assetId)
-    `object`.put("creationTime", getLong(creationDateIndex) * 1000.0)
-    `object`.put("modificationTime", getLong(modificationDateIndex) * 1000.0)
-    `object`.put("mediaType", exportMediaType(mediaType))
-    `object`.put("duration", getInt(durationIndex) / 1000.0)
-    `object`.put("width", widthHeight[0])
-    `object`.put("height", widthHeight[1])
-    `object`.put("url", localUri)
-    `object`.put("uri", localUri)
+    `object`.put(filename.name, getString(filenameIndex))
+    `object`.put(id.name, assetId)
+    `object`.put(creationTime.name, getLong(creationDateIndex) * 1000.0)
+    `object`.put(modificationTime.name, getLong(modificationDateIndex) * 1000.0)
+    `object`.put(AssetItemKeys.mediaType.name, exportMediaType(mediaType))
+    `object`.put(duration.name, getInt(durationIndex) / 1000.0)
+    `object`.put(width.name, widthHeight[0])
+    `object`.put(height.name, widthHeight[1])
+    `object`.put(url.name, localUri)
+    `object`.put(uri.name, localUri)
     array.put(`object`)
     if (limit == 1) break
   }

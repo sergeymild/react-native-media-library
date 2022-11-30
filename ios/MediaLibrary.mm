@@ -17,6 +17,12 @@
 
 using namespace facebook;
 
+@interface MediaLibrary()
+{
+    SaveToCameraRoll *saveToCameraRoll;
+}
+@end
+
 @implementation MediaLibrary
 RCT_EXPORT_MODULE()
 
@@ -26,7 +32,7 @@ NSString *const AssetMediaTypeVideo = @"video";
 NSString *const AssetMediaTypeUnknown = @"unknown";
 NSString *const AssetMediaTypeAll = @"all";
 
-SaveToCameraRoll *saveToCameraRoll;
+
 dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
 + (BOOL)requiresMainQueueSetup

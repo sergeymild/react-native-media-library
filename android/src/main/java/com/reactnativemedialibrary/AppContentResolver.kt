@@ -61,7 +61,7 @@ fun Bundle.addSort(input: JSONObject) {
 }
 
 
-fun addLegacySort(input: JSONObject) {
+fun addLegacySort(input: JSONObject): String {
   var field = MediaStore.Files.FileColumns.DATE_MODIFIED
   if (input.has("sortBy") && input.getString("sortBy") == "creationTime") {
     field = MediaStore.Files.FileColumns.DATE_ADDED

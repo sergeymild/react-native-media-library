@@ -3,6 +3,7 @@ package com.reactnativemedialibrary
 import android.provider.MediaStore
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.ReactApplicationContext
@@ -70,7 +71,12 @@ class MediaLibrary(context: Context) {
         JSONObject(),
         id
       )
-      callback.onChange(jsonArray.toString())
+      if (jsonArray.length() == 0) {
+        return@launch callback.onChange("")
+      }
+      val media = jsonArray.getJSONObject(0)
+      MediaLibraryUtils.getMediaLocation(media, contentResolver)
+      callback.onChange(media.toString())
     }
   }
 
