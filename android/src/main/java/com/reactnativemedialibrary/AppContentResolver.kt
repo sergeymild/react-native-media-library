@@ -120,8 +120,8 @@ fun ContentResolver.listQuery(
   var (selection, arguments) = queryByMediaType(input)
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
     if (input.has("onlyFavorites") && input.getBoolean("onlyFavorites")) {
-      if (selection.isNotEmpty()) selection += " AND "
-      selection += "$IS_FAVORITE = 1"
+      //if (selection.isNotEmpty()) selection += " AND "
+      //selection += "$IS_FAVORITE = 1"
     }
   }
   println("⚽️ SELECT: $selection, ${arguments.contentToString()}")
