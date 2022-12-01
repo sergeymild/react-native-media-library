@@ -114,9 +114,39 @@ void MediaLibrary::installJSIBindings() {
        return jsi::Value::undefined();
     });
 
+    auto fetchVideoFrame = JSI_HOST_FUNCTION("fetchVideoFrame", 1) {
+         auto stringify = runtime.global()
+                 .getPropertyAsObject(runtime, "JSON")
+                 .getPropertyAsFunction(runtime, "stringify");
+         auto result = stringify.call(runtime, args[0]).asString(runtime).utf8(runtime);
+
+         auto params = jni::make_jstring(result);
+         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+
+         auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("fetchVideoFrame");
+
+         std::function<void(std::string)> wrapperOnChange =
+                 [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
+                     j->invokeAsync([r, data, resolve]() {
+                         if (data.empty()) {
+                             resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
+                             return;
+                         }
+                         auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                         auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
+                         resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
+                     });
+                 };
+
+         auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
+         method(javaPart_.get(), params, obj.get());
+         return jsi::Value::undefined();
+     });
+
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
+    exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

@@ -11,6 +11,7 @@ import {
 import { mediaLibrary } from 'react-native-media-library';
 import { useState } from 'react';
 import FastImage from 'react-native-fast-image';
+import FS from 'react-native-fs';
 
 const requestCameraPermission = async () => {
   try {
@@ -49,13 +50,15 @@ export default function App() {
           // console.log('[App.save]', saveResponse);
 
           requestCameraPermission();
-          const response = await mediaLibrary.getAssets({
-            //onlyFavorites: true,
-          });
           console.log(
             '[App.]',
-            response.map((s) => s.isFavorite)
+            await FS.exists(`${FS.CachesDirectoryPath}/3.jpg`)
           );
+          const response = await mediaLibrary.getAssets({
+            //onlyFavorites: true,
+            mediaType: ['video'],
+          });
+          console.log('[App.]', await mediaLibrary.getAsset(response[0].id));
 
           // const saveR = await mediaLibrary.saveToLibrary({
           //   // localUrl: `${__mediaLibrary.docDir()}/ls.jpg`,

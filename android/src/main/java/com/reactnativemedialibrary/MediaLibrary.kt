@@ -1,9 +1,8 @@
 package com.reactnativemedialibrary
 
-import android.provider.MediaStore
 import android.content.Context
 import android.net.Uri
-import android.os.Build
+import android.provider.MediaStore
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.ReactApplicationContext
@@ -90,6 +89,19 @@ class MediaLibrary(context: Context) {
         } else {
           getAsset(id!!, callback)
         }
+      }
+    }
+  }
+
+  @DoNotStrip
+  fun fetchVideoFrame(params: String, callback: GetAssetsCallback) {
+    scope.launch {
+      val input = params.asJsonInput()
+      val response = context.fetchFrame(input)
+      if (response == null) {
+        callback.onChange("")
+      } else {
+        callback.onChange(response.toString())
       }
     }
   }

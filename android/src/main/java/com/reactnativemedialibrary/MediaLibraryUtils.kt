@@ -1,7 +1,6 @@
 package com.reactnativemedialibrary
 
 import android.content.ContentResolver
-import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
@@ -15,11 +14,12 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.util.*
 
 object MediaLibraryUtils {
 
   val retriever: MediaMetadataRetriever
-  get() = MediaMetadataRetriever()
+    get() = MediaMetadataRetriever()
 
   fun getMimeTypeFromFileUrl(url: String?): String? {
     val extension = MimeTypeMap.getFileExtensionFromUrl(url) ?: return null
@@ -131,4 +131,17 @@ object MediaLibraryUtils {
     }
   }
 
+  fun ensureDirExists(dir: File): File? {
+    if (!(dir.isDirectory || dir.mkdirs())) {
+      throw IOException("Couldn't create directory '$dir'")
+    }
+    return dir
+  }
+
+  fun generateOutputPath(internalDirectory: File, dirName: String, extension: String): String {
+    val directory = File(internalDirectory.toString() + File.separator + dirName)
+    ensureDirExists(directory)
+    val filename = UUID.randomUUID().toString()
+    return directory.toString() + File.separator + filename + if (extension.startsWith(".")) extension else ".$extension"
+  }
 }

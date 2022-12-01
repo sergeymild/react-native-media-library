@@ -13,6 +13,11 @@ fun JSONObject.string(key: String): String? {
   return null
 }
 
+fun JSONObject.long(key: String): Long? {
+  if (has(key)) return getLong(key)
+  return null
+}
+
 object MedialLibraryCreateAsset {
 
   private fun isFileExtensionPresent(uri: String): Boolean {
