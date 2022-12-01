@@ -197,7 +197,7 @@ void fromPHAssetToValue(PHAsset *asset, json::object *object, bool isFull) {
     }
 }
 
-void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NSString* _Nullable sortOrder) {
+void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NSString* _Nullable sortOrder, bool onlyFavorites) {
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
 
     if (limit > 0) fetchOptions.fetchLimit = limit;
@@ -214,6 +214,11 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         }
     }
     
+    if (onlyFavorites) {
+        NSString *format = @"favorite == true";
+        fetchOptions.predicate = [NSPredicate predicateWithFormat:format];
+    }
+
     fetchOptions.includeAllBurstAssets = false;
     fetchOptions.includeHiddenAssets = false;
     auto result = [PHAsset fetchAssetsWithOptions:fetchOptions];
@@ -242,14 +247,20 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         int limit = -1;
         NSString *sortBy = NULL;
         NSString *sortOrder = NULL;
+        bool onlyFavorites = false;
         
         auto params = args[0].asObject(runtime);
         auto rawLimit = params.getProperty(*runtime_, "limit");
         auto rawSortBy = params.getProperty(*runtime_, "sortBy");
         auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
+        auto rawOnlyFavorites = params.getProperty(*runtime_, "onlyFavorites");
         if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
             sortBy = toString(rawSortBy.asString(runtime), &runtime);
+        }
+        
+        if (!rawOnlyFavorites.isUndefined() && !rawOnlyFavorites.isNull() && rawOnlyFavorites.getBool() == true) {
+            onlyFavorites = true;
         }
         
         if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
@@ -260,7 +271,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 
         dispatch_async(defQueue, ^{
             json::array results;
-            fetchAssets(&results, limit, sortBy, sortOrder);
+            fetchAssets(&results, limit, sortBy, sortOrder, onlyFavorites);
             std::string resultString = json::stringify(results);
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -308,7 +319,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         }
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
         dispatch_async(defQueue, ^{
-            [saveToCameraRoll saveToCameraRoll:localUri
+            [self->saveToCameraRoll saveToCameraRoll:localUri
                                          album:album
                                       callback:^(NSString * _Nullable error, NSString * _Nullable _id) {
                 

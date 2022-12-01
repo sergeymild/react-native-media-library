@@ -6,10 +6,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.MediaStore.Files.FileColumns.*
 import androidx.annotation.RequiresApi
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.RuntimeException
+import java.util.Arrays
 
 fun String?.asJsonInput(): JSONObject {
   if (this != null) return JSONObject(this)
@@ -17,10 +19,11 @@ fun String?.asJsonInput(): JSONObject {
 }
 
 var ASSET_PROJECTION = arrayOf(
-  MediaStore.Files.FileColumns._ID,
+  _ID,
   MediaStore.Files.FileColumns.DISPLAY_NAME,
   MediaStore.Files.FileColumns.DATA,
-  MediaStore.Files.FileColumns.MEDIA_TYPE,
+  MediaStore.Files.FileColumns.IS_FAVORITE,
+  MEDIA_TYPE,
   MediaStore.MediaColumns.WIDTH,
   MediaStore.MediaColumns.HEIGHT,
   MediaLibrary.dateAdded,
@@ -75,18 +78,54 @@ fun addLegacySort(input: JSONObject): String {
   return "$field $direction"
 }
 
+data class Tuple(val selection: String, val arguments: Array<String>)
+fun queryByMediaType(input: JSONObject): Tuple {
+  var selection = mutableListOf<String>()
+  var arguments = mutableListOf<String>()
+  if (input.has(AssetItemKeys.mediaType.name)) {
+    val jsonArray = input.getJSONArray(AssetItemKeys.mediaType.name)
+    for (i in (0 until jsonArray.length())) {
+      when (jsonArray.getString(i)) {
+          AssetMediaType.video.name -> {
+            selection.add("$MEDIA_TYPE = ?")
+            arguments.add(MEDIA_TYPE_VIDEO.toString())
+          }
+          AssetMediaType.audio.name -> {
+            selection.add("$MEDIA_TYPE = ?")
+            arguments.add(MEDIA_TYPE_AUDIO.toString())
+          }
+          AssetMediaType.photo.name -> {
+            selection.add("$MEDIA_TYPE = ?")
+            arguments.add(MEDIA_TYPE_IMAGE.toString())
+          }
+      }
+    }
+  }
+  if (selection.isEmpty()) {
+    selection.add("$MEDIA_TYPE = ?")
+    selection.add("$MEDIA_TYPE = ?")
+    selection.add("$MEDIA_TYPE = ?")
+    arguments.add(MEDIA_TYPE_VIDEO.toString())
+    arguments.add(MEDIA_TYPE_AUDIO.toString())
+    arguments.add(MEDIA_TYPE_IMAGE.toString())
+  }
+  return Tuple(selection.joinToString(" OR "), arguments.toTypedArray())
+}
+
 fun ContentResolver.listQuery(
   uri: Uri,
   context: Context,
   input: JSONObject,
 ): JSONArray {
-  val selection =
-    "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? OR ${MediaStore.Files.FileColumns.MEDIA_TYPE} = ?"
-  val selectionArgs = arrayOf(
-    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
-    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString()
-  )
-  return makeQuery(uri, context, input, selection, selectionArgs)
+  var (selection, arguments) = queryByMediaType(input)
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    if (input.has("onlyFavorites") && input.getBoolean("onlyFavorites")) {
+      if (selection.isNotEmpty()) selection += " AND "
+      selection += "$IS_FAVORITE = 1"
+    }
+  }
+  println("⚽️ SELECT: $selection, ${arguments.contentToString()}")
+  return makeQuery(uri, context, input, selection, arguments)
 }
 
 fun ContentResolver.singleQuery(
@@ -95,7 +134,7 @@ fun ContentResolver.singleQuery(
   input: JSONObject,
   id: String
 ): JSONArray {
-  val selection = "${MediaStore.Files.FileColumns._ID} = ?"
+  val selection = "$_ID = ?"
   val selectionArgs = arrayOf(id)
   input.put("limit", 1)
   return makeQuery(uri, context, input, selection, selectionArgs)

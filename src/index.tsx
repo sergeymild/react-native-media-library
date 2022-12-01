@@ -44,6 +44,7 @@ export interface FetchAssetsOptions {
   requestUrls?: boolean;
   limit?: number;
   offset?: number;
+  onlyFavorites?: boolean;
 }
 
 interface SaveToLibrary {
@@ -73,13 +74,14 @@ export interface FullAssetItem extends AssetItem {
 export const mediaLibrary = {
   getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
     const params = {
-      mediaType: options?.mediaType,
+      mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
       sortOrder: options?.sortOrder,
       extensions: options?.extensions,
       requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
       offset: options?.offset,
+      onlyFavorites: options?.onlyFavorites ?? false,
     };
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));

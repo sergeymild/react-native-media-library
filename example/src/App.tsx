@@ -49,17 +49,13 @@ export default function App() {
           // console.log('[App.save]', saveResponse);
 
           requestCameraPermission();
-          const response = await mediaLibrary.getAssets({});
-          for (let assetItem of response) {
-            let newVar = await mediaLibrary.getAsset(assetItem.id);
-            console.log(
-              '[App.]',
-              newVar?.mediaType,
-              newVar?.width,
-              newVar?.height,
-              newVar?.duration
-            );
-          }
+          const response = await mediaLibrary.getAssets({
+            //onlyFavorites: true,
+          });
+          console.log(
+            '[App.]',
+            response.map((s) => s.isFavorite)
+          );
 
           // const saveR = await mediaLibrary.saveToLibrary({
           //   // localUrl: `${__mediaLibrary.docDir()}/ls.jpg`,
