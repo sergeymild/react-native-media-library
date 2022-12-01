@@ -33,6 +33,11 @@ declare global {
       params: SaveToLibrary,
       callback: (item: AssetItem) => void
     ): void;
+
+    fetchVideoFrame(
+      params: FetchThumbnailOptions,
+      callback: (item: Thumbnail) => void
+    ): void;
   };
 }
 
@@ -45,6 +50,18 @@ export interface FetchAssetsOptions {
   limit?: number;
   offset?: number;
   onlyFavorites?: boolean;
+}
+
+export interface FetchThumbnailOptions {
+  url: string;
+  time?: number;
+  quality?: number;
+}
+
+export interface Thumbnail {
+  url: string;
+  width: number;
+  height: number;
 }
 
 interface SaveToLibrary {
@@ -97,6 +114,19 @@ export const mediaLibrary = {
   saveToLibrary(params: SaveToLibrary) {
     return new Promise<AssetItem>((resolve) => {
       __mediaLibrary.saveToLibrary(params, (response) => resolve(response));
+    });
+  },
+
+  fetchVideoFrame(params: FetchThumbnailOptions) {
+    return new Promise<Thumbnail | undefined>((resolve) => {
+      __mediaLibrary.fetchVideoFrame(
+        {
+          time: params.time ?? 0,
+          quality: params.quality ?? 1,
+          url: params.url,
+        },
+        (response) => resolve(response)
+      );
     });
   },
 };
