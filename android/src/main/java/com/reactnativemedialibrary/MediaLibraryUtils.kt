@@ -86,12 +86,14 @@ object MediaLibraryUtils {
 
   fun retrieveWidthHeightFromMedia(contentResolver: ContentResolver, videoUri: Uri, size: IntArray) {
     contentResolver.openAssetFileDescriptor(videoUri, "r").use { r ->
-      MediaLibraryUtils.retriever.use { retriever ->
-        retriever.setDataSource(r!!.fileDescriptor)
-        val videoWidth = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
-        val videoHeight = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
-        size[0] = videoWidth!!.toInt()
-        size[1] = videoHeight!!.toInt()
+      r?.fileDescriptor?.let { fileDescriptor ->
+        MediaLibraryUtils.retriever.use { retriever ->
+          retriever.setDataSource(fileDescriptor)
+          val videoWidth = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
+          val videoHeight = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
+          size[0] = videoWidth?.toInt() ?: 0
+          size[1] = videoHeight?.toInt() ?: 0
+        }
       }
     }
   }
