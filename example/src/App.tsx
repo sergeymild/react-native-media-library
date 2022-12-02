@@ -58,7 +58,23 @@ export default function App() {
             //onlyFavorites: true,
             mediaType: ['video'],
           });
-          console.log('[App.]', await mediaLibrary.getAsset(response[0].id));
+          console.log(
+            '[App.]',
+            response.filter((s) => s.mediaType === 'video')[0]
+          );
+
+          console.log(
+            '[App.]',
+            await mediaLibrary.fetchVideoFrame({
+              time: 6,
+              url: (
+                await mediaLibrary.getAsset(
+                  response.filter((s) => s.mediaType === 'video')[0].id
+                )
+              )?.url,
+              quality: 0.4,
+            })
+          );
 
           // const saveR = await mediaLibrary.saveToLibrary({
           //   // localUrl: `${__mediaLibrary.docDir()}/ls.jpg`,

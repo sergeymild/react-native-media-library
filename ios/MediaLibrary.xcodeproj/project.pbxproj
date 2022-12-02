@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
 		92C03C732929F7440068151A /* SaveToCameraRoll.m in Sources */ = {isa = PBXBuildFile; fileRef = 92C03C722929F7440068151A /* SaveToCameraRoll.m */; };
+		92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92F35F962938F9D80088B823 /* FetchVideoFrame.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +31,8 @@
 		92C03C712929F7440068151A /* SaveToCameraRoll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRoll.h; sourceTree = "<group>"; };
 		92C03C722929F7440068151A /* SaveToCameraRoll.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRoll.m; sourceTree = "<group>"; };
 		92C03C74292A051A0068151A /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		92F35F952938F9D80088B823 /* FetchVideoFrame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FetchVideoFrame.h; sourceTree = "<group>"; };
+		92F35F962938F9D80088B823 /* FetchVideoFrame.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FetchVideoFrame.mm; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MediaLibrary.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -55,6 +58,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				92F35F952938F9D80088B823 /* FetchVideoFrame.h */,
+				92F35F962938F9D80088B823 /* FetchVideoFrame.mm */,
 				92C03C712929F7440068151A /* SaveToCameraRoll.h */,
 				92C03C722929F7440068151A /* SaveToCameraRoll.m */,
 				B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */,
@@ -122,6 +127,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */,
 				929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */,
 				92C03C732929F7440068151A /* SaveToCameraRoll.m in Sources */,
 			);

@@ -2329,14 +2329,5 @@ std::pair<object::iterator, bool> value::insert(std::pair<std::string, T> &&p) {
     return as_object().insert(std::forward<T>(p));
 }
 
-
-
-facebook::jsi::Value toJSIValue(facebook::jsi::Runtime& runtime, json::array* array) {
-    auto str = json::stringify(*array);
-    size_t s = str.size();
-    auto c = reinterpret_cast<const uint8_t *>(str.c_str());
-    return facebook::jsi::Value::createFromJsonUtf8(runtime, c, s);
-}
-
 }
 #endif

@@ -12,6 +12,7 @@
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
 #import "SaveToCameraRoll.h"
+#import "FetchVideoFrame.h"
 #import "json.h"
 
 
@@ -354,12 +355,50 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         
         return jsi::Value::undefined();
     });
+    
+    auto fetchVideoFrame = JSI_HOST_FUNCTION("fetchVideoFrame", 2) {
+        auto params = args[0].asObject(runtime);
+        auto url = toString(params.getProperty(runtime, "url").asString(runtime), &runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        auto rawTime = params.getProperty(runtime, "time");
+        auto rawQuality = params.getProperty(runtime, "quality");
+        double time = 0;
+        double quality = 1;
+        if (!rawTime.isUndefined() && !rawTime.isNull() && rawTime.isNumber()) {
+            time = rawTime.asNumber();
+        }
+        
+        if (!rawQuality.isUndefined() && !rawQuality.isNull() && rawQuality.isNumber()) {
+            quality = rawQuality.asNumber();
+        }
+        
+        dispatch_async(defQueue, ^{
+            auto resultString = [FetchVideoFrame fetchVideoFrame:url time:time quality:quality];
+            dispatch_async(defQueue, ^{
+               
+                _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
+                    if (data == NULL) {
+                        resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
+                        return;
+                    }
+                    auto _str = toCString(data);
+                    auto str = reinterpret_cast<const uint8_t *>(_str);
+                    auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.length);
+                    resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+                });
+                
+            });
+        });
+        
+        return jsi::Value::undefined();
+    });
 
 
     auto exportModule = jsi::Object(*runtime_);
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
+    exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
     exportModule.setProperty(*runtime_, "docDir", std::move(docDir));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
