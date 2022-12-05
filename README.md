@@ -8,7 +8,7 @@ Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys t
 ### Install
 add this to `package.json`
 ```
-"react-native-media-library":"sergeymild/react-native-media-library#0.5.0"
+"react-native-media-library":"sergeymild/react-native-media-library#0.6.0"
 ```
 
 ```ts

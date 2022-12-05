@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.lang.ref.WeakReference
 
 @DoNotStrip
 class MediaLibrary(context: Context) {
@@ -33,6 +34,7 @@ class MediaLibrary(context: Context) {
 
   init {
     this.context = context.applicationContext
+    MediaLibrary.context = WeakReference(context.applicationContext)
   }
 
   fun install(context: ReactApplicationContext): Boolean {
@@ -109,5 +111,6 @@ class MediaLibrary(context: Context) {
   companion object {
     var EXTERNAL_CONTENT_URI: Uri = MediaStore.Files.getContentUri("external")
     var dateAdded = MediaStore.Files.FileColumns.DATE_ADDED
+    var context: WeakReference<Context>? = null
   }
 }

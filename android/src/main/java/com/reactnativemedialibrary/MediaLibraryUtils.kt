@@ -9,12 +9,16 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
+import android.webkit.URLUtil
 import androidx.exifinterface.media.ExifInterface
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.io.UnsupportedEncodingException
+import java.net.URLDecoder
 import java.util.*
+
 
 object MediaLibraryUtils {
 
@@ -84,17 +88,31 @@ object MediaLibraryUtils {
     return newFile
   }
 
-  fun retrieveWidthHeightFromMedia(contentResolver: ContentResolver, videoUri: Uri, size: IntArray) {
-    contentResolver.openAssetFileDescriptor(videoUri, "r").use { r ->
-      r?.fileDescriptor?.let { fileDescriptor ->
-        MediaLibraryUtils.retriever.use { retriever ->
-          retriever.setDataSource(fileDescriptor)
-          val videoWidth = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
-          val videoHeight = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
-          size[0] = videoWidth?.toInt() ?: 0
-          size[1] = videoHeight?.toInt() ?: 0
-        }
+  private fun openFileInRetriever(filePath: String): MediaMetadataRetriever? {
+    val context = MediaLibrary.context?.get() ?: return null
+    val r = retriever
+    if (URLUtil.isFileUrl(filePath)) {
+      val decodedPath = try {
+        URLDecoder.decode(filePath, "UTF-8")
+      } catch (e: UnsupportedEncodingException) {
+        filePath
       }
+      r.setDataSource(decodedPath.replace("file://", ""))
+    } else if (filePath.contains("content://")) {
+      r.setDataSource(context, Uri.parse(filePath))
+    } else {
+      r.setDataSource(filePath)
+    }
+    return r
+  }
+
+  fun retrieveWidthHeightFromMedia(contentResolver: ContentResolver, videoUri: Uri, size: IntArray) {
+    videoUri.path?.let {
+      val r = openFileInRetriever(it) ?: return
+      val videoWidth = r.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
+      val videoHeight = r.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
+      size[0] = videoWidth?.toInt() ?: 0
+      size[1] = videoHeight?.toInt() ?: 0
     }
   }
 
