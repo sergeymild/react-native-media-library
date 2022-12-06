@@ -58,10 +58,14 @@ export default function App() {
             //onlyFavorites: true,
             mediaType: ['video'],
           });
-          console.log(
-            '[App.]',
-            response.filter((s) => s)
-          );
+          for (let assetItem of response.filter(
+            (s) => s.mediaType === 'video'
+          )) {
+            console.log(
+              '[App.]',
+              (await mediaLibrary.getAsset(assetItem.id))?.location
+            );
+          }
 
           // console.log(
           //   '[App.]',

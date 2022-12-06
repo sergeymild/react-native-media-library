@@ -18,12 +18,16 @@ import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
 import java.util.*
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 
 object MediaLibraryUtils {
 
   val retriever: MediaMetadataRetriever
     get() = MediaMetadataRetriever()
+
+  private val iSO6709LocationPattern = Pattern.compile("([+\\-][0-9.]+)([+\\-][0-9.]+)")
 
   fun getMimeTypeFromFileUrl(url: String?): String? {
     val extension = MimeTypeMap.getFileExtensionFromUrl(url) ?: return null
@@ -113,9 +117,25 @@ object MediaLibraryUtils {
       val videoHeight = r.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
       size[0] = videoWidth?.toInt() ?: 0
       size[1] = videoHeight?.toInt() ?: 0
+      r.release()
     }
   }
 
+  fun parseStringLocation(location: String?): DoubleArray? {
+    if (location == null) return null
+    val m: Matcher = iSO6709LocationPattern.matcher(location)
+    if (m.find() && m.groupCount() == 2) {
+      val latstr = m.group(1) ?: return null
+      val lonstr = m.group(2) ?: return null
+      try {
+        val lat = latstr.toDouble()
+        val lon = lonstr.toDouble()
+        return doubleArrayOf(lat, lon)
+      } catch (ignored: NumberFormatException) {
+      }
+    }
+    return null
+  }
 
   fun getMediaLocation(media: JSONObject, contentResolver: ContentResolver) {
     val latLong = DoubleArray(2)
@@ -124,12 +144,18 @@ object MediaLibraryUtils {
 
     if (media.getString(AssetItemKeys.mediaType.name) == AssetMediaType.video.name) {
       contentResolver.openAssetFileDescriptor(uri, "r").use { fd ->
-        retriever.use {
-          it.setDataSource(fd!!.fileDescriptor)
-          val locationMetadata = retriever.extractMetadata(
-            MediaMetadataRetriever.METADATA_KEY_LOCATION
-          )
+        val r = retriever
+        r.setDataSource(fd!!.fileDescriptor)
+        val locationMetadata = r.extractMetadata(
+          MediaMetadataRetriever.METADATA_KEY_LOCATION
+        )
+        parseStringLocation(locationMetadata)?.let {
+          val location = JSONObject()
+          location.put("latitude", it[0])
+          location.put("longitude", it[1])
+          media.put("location", location)
         }
+        r.release()
       }
     } else {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
