@@ -61,9 +61,12 @@ export default function App() {
           for (let assetItem of response.filter(
             (s) => s.mediaType === 'video'
           )) {
+            let newVar = await mediaLibrary.getAsset(assetItem.id);
             console.log(
               '[App.]',
-              (await mediaLibrary.getAsset(assetItem.id))?.location
+              newVar?.location,
+              newVar?.width,
+              newVar?.height
             );
           }
 

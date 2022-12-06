@@ -7,6 +7,7 @@ import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import android.webkit.URLUtil
@@ -14,6 +15,7 @@ import androidx.exifinterface.media.ExifInterface
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
+import java.io.FileDescriptor
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
@@ -92,36 +94,38 @@ object MediaLibraryUtils {
     return newFile
   }
 
-  private fun openFileInRetriever(filePath: String): MediaMetadataRetriever? {
-    val context = MediaLibrary.context?.get() ?: return null
-    val r = retriever
-    if (URLUtil.isFileUrl(filePath)) {
-      val decodedPath = try {
-        URLDecoder.decode(filePath, "UTF-8")
-      } catch (e: UnsupportedEncodingException) {
-        filePath
+  inline fun withRetriever(contentResolver: ContentResolver, uri: Uri, handler: (MediaMetadataRetriever) -> Unit) {
+    try {
+      val path = uri.path ?: return
+      val r = retriever
+      var openFileDescriptor: ParcelFileDescriptor? = null
+      if (URLUtil.isFileUrl(path)) {
+        r.setDataSource(path.replace("file://", ""))
+      } else if (URLUtil.isContentUrl(path)) {
+        openFileDescriptor = contentResolver.openFileDescriptor(uri, "r")
+        val fileDescriptor = openFileDescriptor?.fileDescriptor
+        r.setDataSource(fileDescriptor)
+      } else {
+        r.setDataSource(path)
       }
-      r.setDataSource(decodedPath.replace("file://", ""))
-    } else if (filePath.contains("content://")) {
-      r.setDataSource(context, Uri.parse(filePath))
-    } else {
-      r.setDataSource(filePath)
+      handler(r)
+      openFileDescriptor?.close()
+      r.release()
+    } catch (e: java.lang.RuntimeException) {
+      println(e.message)
     }
-    return r
   }
 
   fun retrieveWidthHeightFromMedia(contentResolver: ContentResolver, videoUri: Uri, size: IntArray) {
-    videoUri.path?.let {
-      val r = openFileInRetriever(it) ?: return
-      val videoWidth = r.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
-      val videoHeight = r.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
+    withRetriever(contentResolver, videoUri) {
+      val videoWidth = it.extractMetadata(METADATA_KEY_VIDEO_WIDTH)
+      val videoHeight = it.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)
       size[0] = videoWidth?.toInt() ?: 0
       size[1] = videoHeight?.toInt() ?: 0
-      r.release()
     }
   }
 
-  fun parseStringLocation(location: String?): DoubleArray? {
+  private fun parseStringLocation(location: String?): DoubleArray? {
     if (location == null) return null
     val m: Matcher = iSO6709LocationPattern.matcher(location)
     if (m.find() && m.groupCount() == 2) {
@@ -143,19 +147,16 @@ object MediaLibraryUtils {
     val uri = Uri.parse(localUri)
 
     if (media.getString(AssetItemKeys.mediaType.name) == AssetMediaType.video.name) {
-      contentResolver.openAssetFileDescriptor(uri, "r").use { fd ->
-        val r = retriever
-        r.setDataSource(fd!!.fileDescriptor)
-        val locationMetadata = r.extractMetadata(
+      withRetriever(contentResolver, uri) {
+        val locationMetadata = it.extractMetadata(
           MediaMetadataRetriever.METADATA_KEY_LOCATION
         )
-        parseStringLocation(locationMetadata)?.let {
+        parseStringLocation(locationMetadata)?.let { result ->
           val location = JSONObject()
-          location.put("latitude", it[0])
-          location.put("longitude", it[1])
+          location.put("latitude", result[0])
+          location.put("longitude", result[1])
           media.put("location", location)
         }
-        r.release()
       }
     } else {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -177,7 +178,7 @@ object MediaLibraryUtils {
     }
   }
 
-  fun ensureDirExists(dir: File): File? {
+  private fun ensureDirExists(dir: File): File? {
     if (!(dir.isDirectory || dir.mkdirs())) {
       throw IOException("Couldn't create directory '$dir'")
     }
