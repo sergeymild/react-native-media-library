@@ -14,6 +14,7 @@
 #import "SaveToCameraRoll.h"
 #import "FetchVideoFrame.h"
 #import "json.h"
+#import "CombineImages.h"
 
 
 using namespace facebook;
@@ -32,6 +33,9 @@ NSString *const AssetMediaTypePhoto = @"photo";
 NSString *const AssetMediaTypeVideo = @"video";
 NSString *const AssetMediaTypeUnknown = @"unknown";
 NSString *const AssetMediaTypeAll = @"all";
+
+std::string RESULT_FALSE = "{\"result\": false}";
+std::string RESULT_TRUE = "{\"result\": true}";
 
 
 dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
@@ -393,6 +397,41 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 
         return jsi::Value::undefined();
     });
+    
+    auto combineImages = JSI_HOST_FUNCTION("combineImages", 2) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        auto imagesRawArray = params.getPropertyAsObject(runtime, "images").asArray(runtime);
+        auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
+        auto arraySize = imagesRawArray.size(runtime);
+        NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+        
+        NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
+        
+        for (int i = 0; i < arraySize; i++) {
+            auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
+            [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
+        }
+        
+        dispatch_async(defQueue, ^{
+            NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
+            for (NSString* path in imagesPathArray) {
+                auto image = [RCTConvert UIImage:path];
+                [imagesArray addObject:image];
+            }
+            auto result = [CombineImages combineImages:imagesArray resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        });
+
+        
+        return jsi::Value::undefined();
+    });
 
 
     auto exportModule = jsi::Object(*runtime_);
@@ -400,6 +439,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
     exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
+    exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
     exportModule.setProperty(*runtime_, "docDir", std::move(docDir));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }

@@ -11,7 +11,7 @@ import {
 import { mediaLibrary } from 'react-native-media-library';
 import { useState } from 'react';
 import FastImage from 'react-native-fast-image';
-import FS from 'react-native-fs';
+import FS, { getAllExternalFilesDirs } from 'react-native-fs';
 
 const requestCameraPermission = async () => {
   try {
@@ -40,6 +40,16 @@ export default function App() {
         style={{ height: 50 }}
         onPress={async () => {
           const start = Date.now();
+
+          console.log(mediaLibrary, __mediaLibrary.docDir());
+          const isSuccess = await mediaLibrary.combineImages({
+            images: [
+              `${__mediaLibrary.docDir()}/1.png`,
+              `${__mediaLibrary.docDir()}/3.png`,
+            ],
+            resultSavePath: `${__mediaLibrary.docDir()}/tmp/re/result.png`,
+          });
+          console.log('---', isSuccess);
           // console.log(
           //   '[App.save]',
           // );
@@ -49,26 +59,26 @@ export default function App() {
           // );
           // console.log('[App.save]', saveResponse);
 
-          requestCameraPermission();
-          console.log(
-            '[App.]',
-            await FS.exists(`${FS.CachesDirectoryPath}/3.jpg`)
-          );
-          const response = await mediaLibrary.getAssets({
-            //onlyFavorites: true,
-            mediaType: ['video'],
-          });
-          for (let assetItem of response.filter(
-            (s) => s.mediaType === 'video'
-          )) {
-            let newVar = await mediaLibrary.getAsset(assetItem.id);
-            console.log(
-              '[App.]',
-              newVar?.location,
-              newVar?.width,
-              newVar?.height
-            );
-          }
+          // requestCameraPermission();
+          // console.log(
+          //   '[App.]',
+          //   await FS.exists(`${FS.CachesDirectoryPath}/3.jpg`)
+          // );
+          // const response = await mediaLibrary.getAssets({
+          //   //onlyFavorites: true,
+          //   mediaType: ['video'],
+          // });
+          // for (let assetItem of response.filter(
+          //   (s) => s.mediaType === 'video'
+          // )) {
+          //   let newVar = await mediaLibrary.getAsset(assetItem.id);
+          //   console.log(
+          //     '[App.]',
+          //     newVar?.location,
+          //     newVar?.width,
+          //     newVar?.height
+          //   );
+          // }
 
           // console.log(
           //   '[App.]',

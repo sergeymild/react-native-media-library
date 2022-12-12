@@ -1,4 +1,9 @@
-import { NativeModules, Platform } from 'react-native';
+import {
+  Image,
+  ImageRequireSource,
+  NativeModules,
+  Platform,
+} from 'react-native';
 
 const LINKING_ERROR =
   `The package 'react-native-media-library' doesn't seem to be linked. Make sure: \n\n` +
@@ -37,6 +42,10 @@ declare global {
     fetchVideoFrame(
       params: FetchThumbnailOptions,
       callback: (item: Thumbnail) => void
+    ): void;
+    combineImages(
+      params: { images: string[]; resultSavePath: string },
+      callback: (item: { result: boolean }) => void
     ): void;
   };
 }
@@ -126,6 +135,24 @@ export const mediaLibrary = {
           url: params.url,
         },
         (response) => resolve(response)
+      );
+    });
+  },
+
+  combineImages(params: {
+    images: (ImageRequireSource | string)[];
+    resultSavePath: string;
+  }) {
+    return new Promise<{ result: boolean }>((resolve) => {
+      __mediaLibrary.combineImages(
+        {
+          ...params,
+          images: params.images.map((image) => {
+            if (typeof image === 'string') return image;
+            return Image.resolveAssetSource(image).uri;
+          }),
+        },
+        resolve
       );
     });
   },
