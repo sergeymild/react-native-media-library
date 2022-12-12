@@ -108,6 +108,18 @@ class MediaLibrary(context: Context) {
     }
   }
 
+  @DoNotStrip
+  fun combineImages(params: String, callback: GetAssetsCallback) {
+    scope.launch {
+      val input = params.asJsonInput()
+      if (CombineImages.combineImages(input)) {
+        callback.onChange("{\"result\": true}")
+      } else {
+        callback.onChange("{\"result\": false}")
+      }
+    }
+  }
+
   companion object {
     var EXTERNAL_CONTENT_URI: Uri = MediaStore.Files.getContentUri("external")
     var dateAdded = MediaStore.Files.FileColumns.DATE_ADDED
