@@ -49,9 +49,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     auto runtime_ = (jsi::Runtime*) _cxxBridge.runtime;
     if (runtime_ == nil) return @false;
     [self installJSIBindings:_bridge runtime:runtime_];
-    
+
     saveToCameraRoll = [[SaveToCameraRoll alloc] init];
-    
+
 
     return @true;
 }
@@ -72,7 +72,7 @@ NSString* toString(jsi::String value, jsi::Runtime* runtime_) {
 {
   CFStringRef fileExtension = (__bridge CFStringRef)[localUri pathExtension];
   CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
-  
+
   if (UTTypeConformsTo(fileUTI, kUTTypeImage)) {
     return PHAssetMediaTypeImage;
   }
@@ -163,7 +163,8 @@ NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *optio
             dispatch_semaphore_signal(sema);
         }];
     } else if (asset.mediaType == PHAssetMediaTypeVideo) {
-        auto options = [[PHVideoRequestOptions alloc] init];
+        PHVideoRequestOptions* options = [[PHVideoRequestOptions alloc] init];
+        [options setVersion:PHVideoRequestOptionsVersionOriginal];
         [[PHImageManager defaultManager] requestAVAssetForVideo:asset
                                                         options:options
                                                   resultHandler:^(AVAsset * _Nullable ass, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
@@ -191,7 +192,7 @@ void fromPHAssetToValue(PHAsset *asset, json::object *object, bool isFull) {
         location.insert("latitude", asset.location.coordinate.latitude);
         object->insert("location", location);
     }
-    
+
     if (isFull) {
         PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
         object->insert("url", toCString(_requestUrl(asset, options)));
@@ -202,7 +203,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
 
     if (limit > 0) fetchOptions.fetchLimit = limit;
-    
+
     // sort
     if (sortBy != NULL && ![sortBy isEqualToString:@""]) {
         if ([sortBy isEqualToString: @"creationTime"] || [sortBy isEqualToString: @"modificationTime"]) {
@@ -214,7 +215,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
             fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
         }
     }
-    
+
     if (onlyFavorites) {
         NSString *format = @"favorite == true";
         fetchOptions.predicate = [NSPredicate predicateWithFormat:format];
@@ -225,8 +226,8 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     auto result = [PHAsset fetchAssetsWithOptions:fetchOptions];
 
     results->reserve(result.count);
-    
-    
+
+
     for (int i = 0; i < result.count; i++) {
         PHAsset* asset = [result objectAtIndex:i];
         json::object object;
@@ -237,19 +238,19 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 }
 
 -(void)installJSIBindings:(RCTBridge *) _bridge runtime:(jsi::Runtime*)runtime_ {
-    
+
     auto docDir = JSI_HOST_FUNCTION("docDir", 1) {
         auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
         NSLog(@"===== %@", paths);
         return toJSIString(paths, &runtime);
     });
-    
+
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
         int limit = -1;
         NSString *sortBy = NULL;
         NSString *sortOrder = NULL;
         bool onlyFavorites = false;
-        
+
         auto params = args[0].asObject(runtime);
         auto rawLimit = params.getProperty(*runtime_, "limit");
         auto rawSortBy = params.getProperty(*runtime_, "sortBy");
@@ -259,15 +260,15 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
             sortBy = toString(rawSortBy.asString(runtime), &runtime);
         }
-        
+
         if (!rawOnlyFavorites.isUndefined() && !rawOnlyFavorites.isNull() && rawOnlyFavorites.getBool() == true) {
             onlyFavorites = true;
         }
-        
+
         if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
             sortOrder = toString(rawSortOrder.asString(runtime), &runtime);
         }
-        
+
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
 
         dispatch_async(defQueue, ^{
@@ -283,7 +284,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 
         return jsi::Value::undefined();
     });
-    
+
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = toString(args[0].asString(runtime), &runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -296,7 +297,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
                 fromPHAssetToValue(asset, &object, true);
                 resultString = json::stringify(object);
             }
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 if (data.size() == 0) {
                     resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
@@ -309,7 +310,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         });
         return jsi::Value::undefined();
     });
-    
+
     auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 2) {
         auto params = args[0].asObject(runtime);
         auto localUri = toString(params.getProperty(runtime, "localUrl").asString(runtime), &runtime);
@@ -323,9 +324,9 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
             [self->saveToCameraRoll saveToCameraRoll:localUri
                                          album:album
                                       callback:^(NSString * _Nullable error, NSString * _Nullable _id) {
-                
+
                 dispatch_async(defQueue, ^{
-                   
+
                     std::string resultString = "";
                     std::string errorString = "";
                     if (error) {
@@ -338,7 +339,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
                             resultString = json::stringify(object);
                         }
                     }
-                    
+
                     _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
                         if (err.size() > 0) {
                             resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
@@ -348,14 +349,14 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
                         auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                         resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
                     });
-                    
+
                 });
             }];
         });
-        
+
         return jsi::Value::undefined();
     });
-    
+
     auto fetchVideoFrame = JSI_HOST_FUNCTION("fetchVideoFrame", 2) {
         auto params = args[0].asObject(runtime);
         auto url = toString(params.getProperty(runtime, "url").asString(runtime), &runtime);
@@ -367,15 +368,15 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         if (!rawTime.isUndefined() && !rawTime.isNull() && rawTime.isNumber()) {
             time = rawTime.asNumber();
         }
-        
+
         if (!rawQuality.isUndefined() && !rawQuality.isNull() && rawQuality.isNumber()) {
             quality = rawQuality.asNumber();
         }
-        
+
         dispatch_async(defQueue, ^{
             auto resultString = [FetchVideoFrame fetchVideoFrame:url time:time quality:quality];
             dispatch_async(defQueue, ^{
-               
+
                 _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                     if (data == NULL) {
                         resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
@@ -386,10 +387,10 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
                     auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.length);
                     resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
                 });
-                
+
             });
         });
-        
+
         return jsi::Value::undefined();
     });
 
