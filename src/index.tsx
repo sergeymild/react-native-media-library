@@ -47,6 +47,8 @@ declare global {
       params: { images: string[]; resultSavePath: string },
       callback: (item: { result: boolean }) => void
     ): void;
+
+    cacheDir(): string;
   };
 }
 
@@ -98,6 +100,10 @@ export interface FullAssetItem extends AssetItem {
 }
 
 export const mediaLibrary = {
+  get cacheDir(): string {
+    return __mediaLibrary.cacheDir();
+  },
+
   getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
     const params = {
       mediaType: options?.mediaType ?? ['photo', 'video'],

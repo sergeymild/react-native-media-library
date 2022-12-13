@@ -121,7 +121,7 @@ class MediaLibrary(context: Context) {
   }
 
   @DoNotStrip
-  fun docDir(): String {
+  fun cacheDir(): String {
     return context.cacheDir.absolutePath
   }
 

@@ -8,7 +8,7 @@ Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys t
 ### Install
 add this to `package.json`
 ```
-"react-native-media-library":"sergeymild/react-native-media-library#0.11.0"
+"react-native-media-library":"sergeymild/react-native-media-library#0.12.0"
 ```
 
 ```ts
@@ -91,6 +91,8 @@ mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
 // will return save asset or error string
 mediaLibrary.saveToLibrary(params: SaveToLibrary): Promise<FullAssetItem | string>
+// returns cache directory
+mediaLibrary.cacheDir: string
 
 // retrieve frame from video with passed params
 mediaLibrary.fetchVideoFrame(params: FetchThumbnailOptions): Promise<Thumbnail | undefined>

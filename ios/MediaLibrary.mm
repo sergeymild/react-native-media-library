@@ -243,8 +243,8 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
 
 -(void)installJSIBindings:(RCTBridge *) _bridge runtime:(jsi::Runtime*)runtime_ {
 
-    auto docDir = JSI_HOST_FUNCTION("docDir", 1) {
-        auto *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    auto cacheDir = JSI_HOST_FUNCTION("cacheDir", 1) {
+        auto *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
         NSLog(@"===== %@", paths);
         return toJSIString(paths, &runtime);
     });
@@ -440,7 +440,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));
     exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
     exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
-    exportModule.setProperty(*runtime_, "docDir", std::move(docDir));
+    exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 
