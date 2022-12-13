@@ -47,11 +47,18 @@ object CombineImages {
   }
 
   private fun getBitmapFromUrl(url: String): Bitmap? {
-    val con = URL(url).openConnection()
-    con.connect()
-    val input = con.getInputStream()
-    val bitmap = BitmapFactory.decodeStream(input)
-    input.close()
-    return bitmap
+    if (url.startsWith("http") || url.startsWith("file")) {
+      val con = URL(url).openConnection()
+      con.connect()
+      con.getInputStream().use {
+        return BitmapFactory.decodeStream(it)
+      }
+    } else {
+      val file = File(url)
+      if (!file.exists()) return null
+      file.inputStream().use {
+        return BitmapFactory.decodeStream(it)
+      }
+    }
   }
 }

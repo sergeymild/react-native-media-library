@@ -36,6 +36,10 @@ void MediaLibrary::registerNatives() {
 void MediaLibrary::installJSIBindings() {
     auto exportModule = jsi::Object(*runtime_);
 
+    auto docDir = JSI_HOST_FUNCTION("docDir", 0) {
+       auto method = javaPart_->getClass()->getMethod<JString()>("docDir");
+       return jsi::String::createFromUtf8(runtime, method(javaPart_.get())->toStdString());
+   });
 
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 1) {
        auto stringify = runtime.global()
@@ -171,6 +175,7 @@ void MediaLibrary::installJSIBindings() {
        return jsi::Value::undefined();
    });
 
+    exportModule.setProperty(*runtime_, "docDir", std::move(docDir));
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));

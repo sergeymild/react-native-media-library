@@ -120,6 +120,11 @@ class MediaLibrary(context: Context) {
     }
   }
 
+  @DoNotStrip
+  fun docDir(): String {
+    return context.cacheDir.absolutePath
+  }
+
   companion object {
     var EXTERNAL_CONTENT_URI: Uri = MediaStore.Files.getContentUri("external")
     var dateAdded = MediaStore.Files.FileColumns.DATE_ADDED

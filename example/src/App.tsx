@@ -45,11 +45,11 @@ export default function App() {
           const isSuccess = await mediaLibrary.combineImages({
             images: [
               `${__mediaLibrary.docDir()}/1.png`,
-              `${__mediaLibrary.docDir()}/3.png`,
+              `https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png`,
             ],
             resultSavePath: `${__mediaLibrary.docDir()}/tmp/re/result.png`,
           });
-          console.log('---', isSuccess);
+          console.log('---', isSuccess.result);
           // console.log(
           //   '[App.save]',
           // );
