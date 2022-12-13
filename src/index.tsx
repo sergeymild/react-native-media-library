@@ -101,7 +101,9 @@ export interface FullAssetItem extends AssetItem {
 
 export const mediaLibrary = {
   get cacheDir(): string {
-    return __mediaLibrary.cacheDir();
+    let path = __mediaLibrary.cacheDir();
+    if (!path.endsWith("/")) return `${path}/`
+    return path
   },
 
   getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
