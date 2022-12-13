@@ -8,7 +8,7 @@ Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys t
 ### Install
 add this to `package.json`
 ```
-"react-native-media-library":"sergeymild/react-native-media-library#0.10.0"
+"react-native-media-library":"sergeymild/react-native-media-library#0.11.0"
 ```
 
 ```ts
@@ -75,10 +75,31 @@ export interface FullAssetItem extends AssetItem {
   readonly url: string;
 }
 
+export interface FetchThumbnailOptions {
+  url: string;
+  time?: number;
+  quality?: number;
+}
+
+export interface Thumbnail {
+  url: string;
+  width: number;
+  height: number;
+}
+
 mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
 // will return save asset or error string
 mediaLibrary.saveToLibrary(params: SaveToLibrary): Promise<FullAssetItem | string>
+
+// retrieve frame from video with passed params
+mediaLibrary.fetchVideoFrame(params: FetchThumbnailOptions): Promise<Thumbnail | undefined>
+
+// combine passed images in one
+mediaLibrary.combineImages(params: {
+  images: (ImageRequireSource | string)[];
+  resultSavePath: string;
+}): Promise<{ result: boolean }>
 ```
 
 ## Contributing

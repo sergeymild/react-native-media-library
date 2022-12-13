@@ -46,6 +46,7 @@ export default function App() {
             images: [
               `${__mediaLibrary.docDir()}/1.png`,
               `https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png`,
+              require('../assets/3.png'),
             ],
             resultSavePath: `${__mediaLibrary.docDir()}/tmp/re/result.png`,
           });
