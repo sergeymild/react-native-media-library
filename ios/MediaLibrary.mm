@@ -15,6 +15,7 @@
 #import "FetchVideoFrame.h"
 #import "json.h"
 #import "CombineImages.h"
+#import "ImageSize.h"
 
 
 using namespace facebook;
@@ -150,6 +151,9 @@ NSSortDescriptor* _sortDescriptorFrom(jsi::Runtime* runtime_, jsi::Value sortBy,
 }
 
 PHAsset* fetchAssetById(NSString* _id) {
+    if ([_id hasPrefix:@"ph://"]) {
+        _id = [_id stringByReplacingOccurrencesOfString:@"ph://" withString:@""];
+    }
     PHFetchOptions *options = [PHFetchOptions new];
     options.includeHiddenAssets = YES;
     options.includeAllBurstAssets = YES;
@@ -417,12 +421,54 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         dispatch_async(defQueue, ^{
             NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
             for (NSString* path in imagesPathArray) {
-                auto image = [RCTConvert UIImage:path];
+                auto image = [ImageSize uiImage:path];
                 [imagesArray addObject:image];
             }
             auto result = [CombineImages combineImages:imagesArray resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
             
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        });
+
+        
+        return jsi::Value::undefined();
+    });
+    
+    auto imageSizes = JSI_HOST_FUNCTION("imageSizes", 2) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        auto imagesRawArray = params.getPropertyAsObject(runtime, "images").asArray(runtime);
+        auto arraySize = imagesRawArray.size(runtime);
+        
+        NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
+        
+        for (int i = 0; i < arraySize; i++) {
+            auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
+            [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
+        }
+        
+        dispatch_async(defQueue, ^{
+            json::array jsonResultArray;
+            for (NSString* path in imagesPathArray) {
+                json::object object;
+                if ([path hasPrefix:@"ph://"]) {
+                    auto asset = fetchAssetById(path);
+                    object.insert("width", (double)asset.pixelWidth);
+                    object.insert("height", (double)asset.pixelHeight);
+                } else {
+                    auto image = [ImageSize uiImage:path];
+                    object.insert("width", (float)image.size.width);
+                    object.insert("height", (float)image.size.height);
+                }
+                jsonResultArray.push_back(object);
+            }
+            auto resultString = json::stringify(jsonResultArray);
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
@@ -441,6 +487,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
     exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
+    exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

@@ -48,9 +48,18 @@ declare global {
       callback: (item: { result: boolean }) => void
     ): void;
 
+    imageSizes(
+      params: { images: string[] },
+      callback: (item: {
+        result: { width: number; height: number; size: number }[];
+      }) => void
+    ): void;
+
     cacheDir(): string;
   };
 }
+
+type ImagesTypes = ImageRequireSource | string;
 
 export interface FetchAssetsOptions {
   mediaType?: MediaType[];
@@ -99,11 +108,16 @@ export interface FullAssetItem extends AssetItem {
   readonly location?: { latitude: number; longitude: number };
 }
 
+const prepareImages = (images: ImagesTypes[]): string[] => {
+  return images.map((image) => {
+    if (typeof image === 'string') return image;
+    return Image.resolveAssetSource(image).uri;
+  });
+};
+
 export const mediaLibrary = {
   get cacheDir(): string {
-    let path = __mediaLibrary.cacheDir();
-    if (!path.endsWith("/")) return `${path}/`
-    return path
+    return __mediaLibrary.cacheDir().replace(/\/$/, '');
   },
 
   getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
@@ -154,12 +168,18 @@ export const mediaLibrary = {
     return new Promise<{ result: boolean }>((resolve) => {
       __mediaLibrary.combineImages(
         {
-          ...params,
-          images: params.images.map((image) => {
-            if (typeof image === 'string') return image;
-            return Image.resolveAssetSource(image).uri;
-          }),
+          images: prepareImages(params.images),
+          resultSavePath: params.resultSavePath,
         },
+        resolve
+      );
+    });
+  },
+
+  imageSizes(params: { images: ImagesTypes[] }) {
+    return new Promise((resolve) => {
+      __mediaLibrary.imageSizes(
+        { images: prepareImages(params.images) },
         resolve
       );
     });
