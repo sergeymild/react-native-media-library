@@ -112,11 +112,19 @@ class MediaLibrary(context: Context) {
   fun combineImages(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()
-      if (CombineImages.combineImages(input)) {
+      if (ManipulateImages.combineImages(input)) {
         callback.onChange("{\"result\": true}")
       } else {
         callback.onChange("{\"result\": false}")
       }
+    }
+  }
+
+  @DoNotStrip
+  fun imageSizes(params: String, callback: GetAssetsCallback) {
+    scope.launch {
+      val input = params.asJsonInput()
+      callback.onChange(ManipulateImages.imageSizes(input).toString())
     }
   }
 

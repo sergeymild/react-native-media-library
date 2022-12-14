@@ -4,12 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.URL
 
-object CombineImages {
+object ManipulateImages {
   fun combineImages(input: JSONObject): Boolean {
     val imagesArray = input.getJSONArray("images")
     val resultSavePath = input.getString("resultSavePath")
@@ -44,6 +45,26 @@ object CombineImages {
       Log.e("CombineImages", null, e)
       false
     }
+  }
+
+
+  fun imageSizes(input: JSONObject): JSONArray {
+    val imagesArray = input.getJSONArray("images")
+    val array = JSONArray()
+    try {
+      for (i in 0 until imagesArray.length()) {
+        val url = imagesArray.getString(i)
+        val bitmap = getBitmapFromUrl(url) ?: return JSONArray()
+        val obj = JSONObject()
+        obj.put("width", bitmap.width)
+        obj.put("height", bitmap.height)
+        array.put(obj)
+        bitmap.recycle()
+      }
+    } catch (e: Throwable) {
+      Log.e("CombineImages", null, e)
+    }
+    return array
   }
 
   private fun getBitmapFromUrl(url: String): Bitmap? {

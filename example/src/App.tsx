@@ -41,6 +41,8 @@ export default function App() {
         onPress={async () => {
           const start = Date.now();
 
+          await requestCameraPermission();
+
           console.log('[App.]', mediaLibrary.cacheDir);
           console.log('[App.]', await mediaLibrary.getAssets({ limit: 1 }));
           // return;
@@ -49,7 +51,7 @@ export default function App() {
             await mediaLibrary.imageSizes({
               images: [
                 (await mediaLibrary.getAssets({ limit: 1 }))[0].uri,
-                `${mediaLibrary.cacheDir}/3.jpeg`,
+                `${mediaLibrary.cacheDir}/3.png`,
                 'https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png',
                 require('../assets/3.png'),
               ],
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
+    backgroundColor: 'red',
   },
   box: {
     width: 60,
