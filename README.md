@@ -8,7 +8,7 @@ Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys t
 ### Install
 add this to `package.json`
 ```
-"react-native-media-library":"sergeymild/react-native-media-library#0.12.0"
+"react-native-media-library":"sergeymild/react-native-media-library#0.13.0"
 ```
 
 ```ts
@@ -102,6 +102,11 @@ mediaLibrary.combineImages(params: {
   images: (ImageRequireSource | string)[];
   resultSavePath: string;
 }): Promise<{ result: boolean }>
+
+// resolve passed images sizes
+mediaLibrary.imageSizes(params: {
+  images: (ImageRequireSource | string)[];
+}): Promise<{ result: { width: number; height: number; size: number }[] }>
 ```
 
 ## Contributing
