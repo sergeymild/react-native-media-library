@@ -203,6 +203,7 @@ void fromPHAssetToValue(PHAsset *asset, json::object *object, bool isFull) {
 
     if (isFull) {
         PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
+        [options setNetworkAccessAllowed:true];
         object->insert("url", toCString(_requestUrl(asset, options)));
     }
 }

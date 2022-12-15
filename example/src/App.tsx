@@ -43,21 +43,30 @@ export default function App() {
 
           await requestCameraPermission();
 
+          const result = await mediaLibrary.getAssets({
+            limit: 10,
+            sortBy: 'creationTime',
+            sortOrder: 'desc',
+          });
+          console.log('[App.]', result.length);
+          for (let assetItem of result) {
+            console.log('[App.]', await mediaLibrary.getAsset(assetItem.id));
+          }
+
           console.log('[App.]', mediaLibrary.cacheDir);
-          console.log('[App.]', await mediaLibrary.getAssets({ limit: 1 }));
-          // return;
-          console.log(
-            '[App.]',
-            await mediaLibrary.imageSizes({
-              images: [
-                (await mediaLibrary.getAssets({ limit: 1 }))[0].uri,
-                `${mediaLibrary.cacheDir}/3.png`,
-                'https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png',
-                require('../assets/3.png'),
-              ],
-            })
-          );
-          console.log('[App.imageSizes]');
+          console.log('[App.]');
+          // console.log(
+          //   '[App.]',
+          //   await mediaLibrary.imageSizes({
+          //     images: [
+          //       (await mediaLibrary.getAssets({ limit: 1 }))[0].uri,
+          //       `${mediaLibrary.cacheDir}/3.png`,
+          //       'https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png',
+          //       require('../assets/3.png'),
+          //     ],
+          //   })
+          // );
+          // console.log('[App.imageSizes]');
           // const isSuccess = await mediaLibrary.combineImages({
           //   images: [
           //     `${__mediaLibrary.docDir()}/1.png`,
