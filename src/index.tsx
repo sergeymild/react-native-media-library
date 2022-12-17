@@ -51,7 +51,12 @@ declare global {
     imageSizes(
       params: { images: string[] },
       callback: (item: {
-        result: { width: number; height: number; size: number }[];
+        result: {
+          width: number;
+          height: number;
+          size: number;
+          orientation?: number;
+        }[];
       }) => void
     ): void;
 
@@ -178,7 +183,14 @@ export const mediaLibrary = {
 
   imageSizes(params: {
     images: ImagesTypes[];
-  }): Promise<{ result: { width: number; height: number; size: number }[] }> {
+  }): Promise<{
+    result: {
+      width: number;
+      height: number;
+      size: number;
+      orientation?: number;
+    }[];
+  }> {
     return new Promise((resolve) => {
       __mediaLibrary.imageSizes(
         { images: prepareImages(params.images) },
