@@ -55,7 +55,6 @@ declare global {
           width: number;
           height: number;
           size: number;
-          orientation?: number;
         }[];
       }) => void
     ): void;
@@ -181,14 +180,11 @@ export const mediaLibrary = {
     });
   },
 
-  imageSizes(params: {
-    images: ImagesTypes[];
-  }): Promise<{
+  imageSizes(params: { images: ImagesTypes[] }): Promise<{
     result: {
       width: number;
       height: number;
       size: number;
-      orientation?: number;
     }[];
   }> {
     return new Promise((resolve) => {
