@@ -176,7 +176,9 @@ export const mediaLibrary = {
     });
   },
 
-  imageSizes(params: { images: ImagesTypes[] }) {
+  imageSizes(params: {
+    images: ImagesTypes[];
+  }): Promise<{ result: { width: number; height: number; size: number }[] }> {
     return new Promise((resolve) => {
       __mediaLibrary.imageSizes(
         { images: prepareImages(params.images) },
