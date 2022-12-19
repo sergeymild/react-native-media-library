@@ -173,6 +173,7 @@ NSString* _requestUrl(PHAsset *asset, PHContentEditingInputRequestOptions *optio
     } else if (asset.mediaType == PHAssetMediaTypeVideo) {
         PHVideoRequestOptions* options = [[PHVideoRequestOptions alloc] init];
         [options setVersion:PHVideoRequestOptionsVersionOriginal];
+        [options setNetworkAccessAllowed:true];
         [[PHImageManager defaultManager] requestAVAssetForVideo:asset
                                                         options:options
                                                   resultHandler:^(AVAsset * _Nullable ass, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
