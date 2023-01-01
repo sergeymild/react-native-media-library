@@ -41,20 +41,27 @@ export default function App() {
         onPress={async () => {
           const start = Date.now();
 
-          await requestCameraPermission();
-
-          const result = await mediaLibrary.getAssets({
-            limit: 10,
-            sortBy: 'creationTime',
-            sortOrder: 'desc',
-          });
-          console.log('[App.]', result.length);
-          for (let assetItem of result) {
-            console.log('[App.]', await mediaLibrary.getAsset(assetItem.id));
-          }
+          // await requestCameraPermission();
+          //
+          // const result = await mediaLibrary.getAssets({
+          //   limit: 10,
+          //   sortBy: 'creationTime',
+          //   sortOrder: 'desc',
+          // });
+          // console.log('[App.]', result.length);
+          // for (let assetItem of result) {
+          //   console.log('[App.]', await mediaLibrary.getAsset(assetItem.id));
+          // }
 
           console.log('[App.]', mediaLibrary.cacheDir);
           console.log('[App.]');
+          const t = await mediaLibrary.imageResize({
+            width: 400,
+            format: 'jpeg',
+            uri: `${mediaLibrary.cacheDir}/3.jpeg`,
+            resultSavePath: `${mediaLibrary.cacheDir}/result.jpg`,
+          });
+          console.log('[App.---- ]', t);
           // console.log(
           //   '[App.]',
           //   await mediaLibrary.imageSizes({

@@ -16,6 +16,7 @@
 #import "json.h"
 #import "CombineImages.h"
 #import "ImageSize.h"
+#import "ImageResize.h"
 
 
 using namespace facebook;
@@ -480,6 +481,40 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
         
         return jsi::Value::undefined();
     });
+    
+    auto imageResize = JSI_HOST_FUNCTION("imageResize", 1) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        auto imageUri = params.getProperty(runtime, "uri").asString(runtime).utf8(runtime);
+        auto rawWidth = params.getProperty(runtime, "width").asNumber();
+        auto rawHeight = params.getProperty(runtime, "height").asNumber();
+        auto rawFormat = params.getProperty(runtime, "format").asString(runtime).utf8(runtime);
+        auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
+        
+        NSString *uri = [[NSString alloc] initWithCString:imageUri.c_str() encoding:NSUTF8StringEncoding];
+        NSString *format = [[NSString alloc] initWithCString:rawFormat.c_str() encoding:NSUTF8StringEncoding];
+        NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+        NSNumber *width = [NSNumber numberWithDouble:rawWidth];
+        NSNumber *height = [NSNumber numberWithDouble:rawHeight];
+        
+        dispatch_async(defQueue, ^{
+            auto result = [ImageResize resize:uri
+                                        width:width
+                                       height:height
+                                       format:format
+                               resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        });
+
+        
+        return jsi::Value::undefined();
+    });
 
 
     auto exportModule = jsi::Object(*runtime_);
@@ -490,6 +525,7 @@ void fetchAssets(json::array *results, int limit, NSString* _Nullable sortBy, NS
     exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
+    exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

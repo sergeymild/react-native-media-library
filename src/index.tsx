@@ -48,6 +48,11 @@ declare global {
       callback: (item: { result: boolean }) => void
     ): void;
 
+    imageResize(
+      params: ImageResizeParams,
+      callback: (item: { result: boolean }) => void
+    ): void;
+
     imageSizes(
       params: { images: string[] },
       callback: (item: {
@@ -106,6 +111,14 @@ export interface AssetItem {
   readonly uri: string;
 }
 
+export interface ImageResizeParams {
+  uri: ImageRequireSource | string;
+  width?: number;
+  height?: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
 export interface FullAssetItem extends AssetItem {
   readonly url: string;
   // on android, it will be available only from API 24 (N)
@@ -117,6 +130,11 @@ const prepareImages = (images: ImagesTypes[]): string[] => {
     if (typeof image === 'string') return image;
     return Image.resolveAssetSource(image).uri;
   });
+};
+
+const prepareImage = (image: ImagesTypes): string => {
+  if (typeof image === 'string') return image;
+  return Image.resolveAssetSource(image).uri;
 };
 
 export const mediaLibrary = {
@@ -174,6 +192,21 @@ export const mediaLibrary = {
         {
           images: prepareImages(params.images),
           resultSavePath: params.resultSavePath,
+        },
+        resolve
+      );
+    });
+  },
+
+  imageResize(params: ImageResizeParams) {
+    return new Promise<{ result: boolean }>((resolve) => {
+      __mediaLibrary.imageResize(
+        {
+          uri: prepareImage(params.uri),
+          resultSavePath: params.resultSavePath,
+          format: params.format ?? 'png',
+          height: params.height ?? -1,
+          width: params.width ?? -1,
         },
         resolve
       );

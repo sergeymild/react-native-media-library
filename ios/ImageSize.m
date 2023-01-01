@@ -92,4 +92,27 @@
 
   return image;
 }
+
+
++ (BOOL)save:(UIImage*)image format:(NSString*)format path:(NSString*)path {
+    NSString *folderPath = [path stringByDeletingLastPathComponent];
+    NSError * error = nil;
+    [[NSFileManager defaultManager] createDirectoryAtPath:folderPath
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:&error];
+    if (error != NULL) {
+        NSLog(@"Error %@", error.description);
+        return false;
+    }
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    }
+    
+    if ([format isEqualToString: @"png"]) {
+        return [UIImagePNGRepresentation(image) writeToFile:path atomically:true];
+    }
+
+    return [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:true];
+}
 @end

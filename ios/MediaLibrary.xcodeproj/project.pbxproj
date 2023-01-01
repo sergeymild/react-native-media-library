@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		928DBA1C2947AF15006E1CD9 /* CombineImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 928DBA1B2947AF15006E1CD9 /* CombineImages.m */; };
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
+		92A6D40E2961C6A600934711 /* ImageResize.m in Sources */ = {isa = PBXBuildFile; fileRef = 92A6D40D2961C6A600934711 /* ImageResize.m */; };
 		92C03C732929F7440068151A /* SaveToCameraRoll.m in Sources */ = {isa = PBXBuildFile; fileRef = 92C03C722929F7440068151A /* SaveToCameraRoll.m */; };
 		92F2004B2949BBBA00F69C75 /* ImageSize.m in Sources */ = {isa = PBXBuildFile; fileRef = 92F2004A2949BBBA00F69C75 /* ImageSize.m */; };
 		92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92F35F962938F9D80088B823 /* FetchVideoFrame.mm */; };
@@ -32,6 +33,8 @@
 		928DBA1B2947AF15006E1CD9 /* CombineImages.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CombineImages.m; sourceTree = "<group>"; };
 		929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaLibrary.mm; sourceTree = "<group>"; };
 		929FAD112928DB74000DF958 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
+		92A6D40C2961C6A600934711 /* ImageResize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageResize.h; sourceTree = "<group>"; };
+		92A6D40D2961C6A600934711 /* ImageResize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImageResize.m; sourceTree = "<group>"; };
 		92C03C712929F7440068151A /* SaveToCameraRoll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRoll.h; sourceTree = "<group>"; };
 		92C03C722929F7440068151A /* SaveToCameraRoll.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRoll.m; sourceTree = "<group>"; };
 		92C03C74292A051A0068151A /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
@@ -72,6 +75,8 @@
 				929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */,
 				928DBA1A2947AF15006E1CD9 /* CombineImages.h */,
 				928DBA1B2947AF15006E1CD9 /* CombineImages.m */,
+				92A6D40C2961C6A600934711 /* ImageResize.h */,
+				92A6D40D2961C6A600934711 /* ImageResize.m */,
 				92F200492949BBBA00F69C75 /* ImageSize.h */,
 				92F2004A2949BBBA00F69C75 /* ImageSize.m */,
 				92C03C74292A051A0068151A /* json.h */,
@@ -138,6 +143,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				928DBA1C2947AF15006E1CD9 /* CombineImages.m in Sources */,
+				92A6D40E2961C6A600934711 /* ImageResize.m in Sources */,
 				92F2004B2949BBBA00F69C75 /* ImageSize.m in Sources */,
 				92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */,
 				929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */,

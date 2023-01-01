@@ -7,6 +7,7 @@
 //
 
 #import "CombineImages.h"
+#import "ImageSize.h"
 
 @implementation CombineImages
 
@@ -35,21 +36,7 @@
         return false;
     }
     
-    NSString *folderPath = [resultSavePath stringByDeletingLastPathComponent];
-    NSError * error = nil;
-    [[NSFileManager defaultManager] createDirectoryAtPath:folderPath
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:&error];
-    if (error != NULL) {
-        NSLog(@"Error %@", error.description);
-        return false;
-    }
-    if ([[NSFileManager defaultManager] fileExistsAtPath:resultSavePath]) {
-        [[NSFileManager defaultManager] removeItemAtPath:resultSavePath error:nil];
-    }
-
-    return [UIImagePNGRepresentation(finalImage) writeToFile:resultSavePath atomically:true];
+    return [ImageSize save:finalImage format:@"png" path:resultSavePath];
 }
 
 @end

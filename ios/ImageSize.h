@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ImageSize : NSObject
 + (UIImage *)uiImage:(NSString*)json;
+
++ (BOOL)save:(UIImage*)image format:(NSString*)format path:(NSString*)path;
 @end
 
 NS_ASSUME_NONNULL_END
