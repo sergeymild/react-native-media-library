@@ -8,7 +8,7 @@ Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys t
 ### Install
 add this to `package.json`
 ```
-"react-native-media-library":"sergeymild/react-native-media-library#0.15.0"
+"react-native-media-library":"sergeymild/react-native-media-library#0.16.0"
 ```
 
 ```ts
@@ -87,6 +87,14 @@ export interface Thumbnail {
   height: number;
 }
 
+export interface ImageResizeParams {
+  uri: ImageRequireSource | string;
+  width?: number;
+  height?: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
 mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
 // will return save asset or error string
@@ -102,6 +110,9 @@ mediaLibrary.combineImages(params: {
   images: (ImageRequireSource | string)[];
   resultSavePath: string;
 }): Promise<{ result: boolean }>
+
+// resize image based on passed width and height
+mediaLibrary.imageResize(params: ImageResizeParams): Promise<{ result: boolean }>
 
 // resolve passed images sizes
 mediaLibrary.imageSizes(params: {
