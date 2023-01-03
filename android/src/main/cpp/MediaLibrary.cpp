@@ -175,6 +175,34 @@ void MediaLibrary::installJSIBindings() {
        return jsi::Value::undefined();
    });
 
+    auto imageResize = JSI_HOST_FUNCTION("imageResize", 1) {
+       auto stringify = runtime.global()
+               .getPropertyAsObject(runtime, "JSON")
+               .getPropertyAsFunction(runtime, "stringify");
+       auto result = stringify.call(runtime, args[0]).asString(runtime).utf8(runtime);
+       auto params = jni::make_jstring(result);
+       auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+
+       auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("imageResize");
+
+       std::function<void(std::string)> wrapperOnChange =
+           [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
+               j->invokeAsync([r, data, resolve]() {
+                   if (data.empty()) {
+                       resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
+                       return;
+                   }
+                   auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                   auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
+                   resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
+               });
+           };
+
+       auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
+       method(javaPart_.get(), params, obj.get());
+       return jsi::Value::undefined();
+   });
+
     auto imageSizes = JSI_HOST_FUNCTION("combineImages", 1) {
        auto stringify = runtime.global()
                .getPropertyAsObject(runtime, "JSON")
@@ -210,6 +238,7 @@ void MediaLibrary::installJSIBindings() {
     exportModule.setProperty(*runtime_, "fetchVideoFrame", std::move(fetchVideoFrame));
     exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
+    exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

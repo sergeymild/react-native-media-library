@@ -121,6 +121,18 @@ class MediaLibrary(context: Context) {
   }
 
   @DoNotStrip
+  fun imageResize(params: String, callback: GetAssetsCallback) {
+    scope.launch {
+      val input = params.asJsonInput()
+      if (ManipulateImages.imageResize(input)) {
+        callback.onChange("{\"result\": true}")
+      } else {
+        callback.onChange("{\"result\": false}")
+      }
+    }
+  }
+
+  @DoNotStrip
   fun imageSizes(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()

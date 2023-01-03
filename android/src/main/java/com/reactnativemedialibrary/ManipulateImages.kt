@@ -10,6 +10,15 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.URL
 
+fun toCompressFormat(format: String): Bitmap.CompressFormat {
+  return when (format) {
+    "jpeg" -> Bitmap.CompressFormat.JPEG
+    "jpg" -> Bitmap.CompressFormat.JPEG
+    "png" -> Bitmap.CompressFormat.PNG
+    else -> Bitmap.CompressFormat.PNG
+  }
+}
+
 object ManipulateImages {
   fun combineImages(input: JSONObject): Boolean {
     val imagesArray = input.getJSONArray("images")
@@ -40,6 +49,40 @@ object ManipulateImages {
       result.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
       val byteArray = byteArrayOutputStream.toByteArray()
       file.writeBytes(byteArray)
+      true
+    } catch (e: Throwable) {
+      Log.e("CombineImages", null, e)
+      false
+    }
+  }
+
+  fun imageResize(input: JSONObject): Boolean {
+    val uri = input.getString("uri")
+    val width = input.getDouble("width")
+    val height = input.getDouble("height")
+    val format = input.getString("format")
+    val resultSavePath = input.getString("resultSavePath")
+    val file = File(resultSavePath)
+
+    return try {
+      var bitmap = getBitmapFromUrl(uri) ?: return false
+      val currentImageRatio = bitmap.width.toFloat() / bitmap.height
+      var newWidth = 0
+      var newHeight = 0
+      if (width >= 0) {
+        newWidth = width.toInt()
+        newHeight = (newWidth / currentImageRatio).toInt()
+      }
+
+      if (height >= 0) {
+        newHeight = height.toInt()
+        newWidth = if (newWidth == 0) (currentImageRatio * newHeight).toInt() else newWidth
+      }
+      bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+
+      file.outputStream().use { fileOut ->
+        bitmap.compress(toCompressFormat(format), 100, fileOut)
+      }
       true
     } catch (e: Throwable) {
       Log.e("CombineImages", null, e)

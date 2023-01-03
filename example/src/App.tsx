@@ -41,7 +41,7 @@ export default function App() {
         onPress={async () => {
           const start = Date.now();
 
-          // await requestCameraPermission();
+          await requestCameraPermission();
           //
           // const result = await mediaLibrary.getAssets({
           //   limit: 10,
@@ -54,12 +54,12 @@ export default function App() {
           // }
 
           console.log('[App.]', mediaLibrary.cacheDir);
-          console.log('[App.]');
+          // console.log('[App.]');
           const t = await mediaLibrary.imageResize({
-            width: 400,
-            format: 'jpeg',
+            width: 200,
+            format: 'png',
             uri: `${mediaLibrary.cacheDir}/3.jpeg`,
-            resultSavePath: `${mediaLibrary.cacheDir}/result.jpg`,
+            resultSavePath: `${mediaLibrary.cacheDir}/result.png`,
           });
           console.log('[App.---- ]', t);
           // console.log(
