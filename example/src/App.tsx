@@ -12,6 +12,8 @@ import { mediaLibrary } from 'react-native-media-library';
 import { useState } from 'react';
 import FastImage from 'react-native-fast-image';
 import FS, { getAllExternalFilesDirs } from 'react-native-fs';
+import { ImagesList } from './ImagesList';
+import { CollectionsList } from './CollectionsList';
 
 const requestCameraPermission = async () => {
   try {
@@ -31,8 +33,15 @@ const requestCameraPermission = async () => {
 
 export default function App() {
   const [image, setImage] = useState();
+  const [openCollection, setOpenCollection] = useState<string | undefined>();
 
   console.log('[App.App]', image);
+
+  if (openCollection) {
+    return <ImagesList collection={openCollection} />;
+  }
+
+  return <CollectionsList setOpenCollection={setOpenCollection} />;
 
   return (
     <View style={styles.container}>
@@ -41,7 +50,7 @@ export default function App() {
         onPress={async () => {
           const start = Date.now();
 
-          await requestCameraPermission();
+          // await requestCameraPermission();
           //
           // const result = await mediaLibrary.getAssets({
           //   limit: 10,
@@ -55,13 +64,18 @@ export default function App() {
 
           console.log('[App.]', mediaLibrary.cacheDir);
           // console.log('[App.]');
-          const t = await mediaLibrary.imageResize({
-            width: 200,
-            format: 'png',
-            uri: `${mediaLibrary.cacheDir}/3.jpeg`,
-            resultSavePath: `${mediaLibrary.cacheDir}/result.png`,
-          });
-          console.log('[App.---- ]', t);
+          // const t = await mediaLibrary.imageResize({
+          //   width: 200,
+          //   format: 'png',
+          //   uri: `${mediaLibrary.cacheDir}/3.jpeg`,
+          //   resultSavePath: `${mediaLibrary.cacheDir}/result.png`,
+          // });
+          // console.log('[App.---- ]', t);
+          // const s = await mediaLibrary.getAssets({});
+          // console.log(
+          //   '[App.]',
+          //   s.find((ss) => ss.filename.startsWith('image.png'))
+          // );
           // console.log(
           //   '[App.]',
           //   await mediaLibrary.imageSizes({

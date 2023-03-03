@@ -16,7 +16,9 @@ typedef void (^PhotosAuthorizedBlock)( NSString* _Nullable  error, NSString* _Nu
 typedef void (^LibCallback)(NSString* _Nullable  error, NSString* _Nullable success);
 
 @interface SaveToCameraRoll : NSObject
--(void)saveToCameraRoll:(NSString *)localUri album:(NSString* _Nullable)album callback:(PhotosAuthorizedBlock)callback;
+-(void)saveToCameraRoll:(NSString *)localUri
+                  album:(NSString* _Nullable)album
+               callback:(PhotosAuthorizedBlock)callback;
 @end
 
 NS_ASSUME_NONNULL_END

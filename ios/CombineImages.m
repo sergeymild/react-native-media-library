@@ -12,7 +12,7 @@
 @implementation CombineImages
 
 + (BOOL)combineImages:(NSArray<UIImage *> * _Nonnull)images
-                     resultSavePath:(NSString* _Nonnull) resultSavePath {
+       resultSavePath:(NSString* _Nonnull) resultSavePath {
     
     UIImage *firstImage = [images firstObject];
     float parentCenterX = firstImage.size.width / 2;

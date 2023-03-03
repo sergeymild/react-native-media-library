@@ -34,6 +34,7 @@ declare global {
       options: FetchAssetsOptions,
       callback: (item: AssetItem[]) => void
     ): void;
+    getCollections(callback: (items: CollectionItem[]) => void): void;
     saveToLibrary(
       params: SaveToLibrary,
       callback: (item: AssetItem) => void
@@ -79,6 +80,7 @@ export interface FetchAssetsOptions {
   limit?: number;
   offset?: number;
   onlyFavorites?: boolean;
+  collectionId?: string;
 }
 
 export interface FetchThumbnailOptions {
@@ -109,6 +111,11 @@ export interface AssetItem {
   readonly width: number;
   readonly height: number;
   readonly uri: string;
+}
+
+export interface CollectionItem {
+  readonly filename: string;
+  readonly id: string;
 }
 
 export interface ImageResizeParams {
@@ -152,9 +159,16 @@ export const mediaLibrary = {
       limit: options?.limit,
       offset: options?.offset,
       onlyFavorites: options?.onlyFavorites ?? false,
+      collectionId: options?.collectionId,
     };
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
+    });
+  },
+
+  getCollections(): Promise<CollectionItem[]> {
+    return new Promise<CollectionItem[]>((resolve) => {
+      __mediaLibrary.getCollections((response) => resolve(response));
     });
   },
 

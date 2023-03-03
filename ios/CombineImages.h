@@ -11,6 +11,6 @@
 @interface CombineImages : NSObject
 
 + (BOOL)combineImages:(NSArray<UIImage *> * _Nonnull)images
-                     resultSavePath:(NSString* _Nonnull) resultSavePath;
+       resultSavePath:(NSString* _Nonnull) resultSavePath;
 
 @end
