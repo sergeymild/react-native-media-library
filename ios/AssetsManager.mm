@@ -26,26 +26,25 @@
 
 
 -(void) fetchCollections:(json::array*)results {
-    auto result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
-    auto resultFavorites = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumFavorites options:nil];
+    auto smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
+    auto albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
     
-    results->reserve(result.count + resultFavorites.count);
+    results->reserve(smartAlbums.count + albums.count);
 
-    for (int i = 0; i < result.count; i++) {
-        PHAssetCollection* asset = [result objectAtIndex:i];
+    for (int i = 0; i < smartAlbums.count; i++) {
+        PHAssetCollection* asset = [smartAlbums objectAtIndex:i];
         json::object object;
         object.insert("filename", [Helpers toCString:asset.localizedTitle]);
         object.insert("id", [Helpers toCString:asset.localIdentifier]);
-        object.insert("type", "userType");
         results->push_back(object);
     }
     
-    for (int i = 0; i < resultFavorites.count; i++) {
-        PHAssetCollection* asset = [resultFavorites objectAtIndex:i];
+    for (int i = 0; i < albums.count; i++) {
+        PHAssetCollection* asset = [albums objectAtIndex:i];
         json::object object;
         object.insert("filename", [Helpers toCString:asset.localizedTitle]);
+        object.insert("count", (int)asset.estimatedAssetCount);
         object.insert("id", [Helpers toCString:asset.localIdentifier]);
-        object.insert("type", "favorites");
         results->push_back(object);
     }
 }
@@ -56,7 +55,7 @@
           sortOrder:(NSString* _Nullable)sortOrder
          collection:(NSString* _Nullable)collectionId {
     PHCollection* _Nullable collection;
-    if (collection) {
+    if (collectionId) {
         collection = [PHAssetCollection fetchAssetCollectionsWithLocalIdentifiers:@[collectionId] options:nil].firstObject;
     }
     
