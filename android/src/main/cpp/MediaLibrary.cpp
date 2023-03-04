@@ -33,6 +33,25 @@ void MediaLibrary::registerNatives() {
    });
 }
 
+std::function<void(std::string)> MediaLibrary::createCallback(
+        const std::shared_ptr<facebook::jsi::Value>& resolve,
+        bool returnUndefinedOnEmpty
+        ) {
+    std::function<void(std::string)> wrapperOnChange =
+            [j = jsCallInvoker_, r = runtime_, resolve, returnUndefinedOnEmpty](const std::string& data) {
+                j->invokeAsync([r, data, resolve, returnUndefinedOnEmpty]() {
+                    if (data.empty() && returnUndefinedOnEmpty) {
+                        resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
+                        return;
+                    }
+                    auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                    auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
+                    resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
+                });
+            };
+    return std::move(wrapperOnChange);
+}
+
 void MediaLibrary::installJSIBindings() {
     auto exportModule = jsi::Object(*runtime_);
 
@@ -41,7 +60,7 @@ void MediaLibrary::installJSIBindings() {
        return jsi::String::createFromUtf8(runtime, method(javaPart_.get())->toStdString());
    });
 
-    auto getAssets = JSI_HOST_FUNCTION("getAssets", 1) {
+    auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
        auto stringify = runtime.global()
                .getPropertyAsObject(runtime, "JSON")
                .getPropertyAsFunction(runtime, "stringify");
@@ -52,16 +71,24 @@ void MediaLibrary::installJSIBindings() {
 
         auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("getAssets");
 
-        std::function<void(std::string)> wrapperOnChange =
-        [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-            j->invokeAsync([r, data, resolve]() {
-                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-            });
-        };
+        std::function<void(std::string)> wrapperOnChange = createCallback(resolve, false);
         auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
         method(javaPart_.get(), params, obj.get());
+        return jsi::Value::undefined();
+    });
+
+    auto getCollections = JSI_HOST_FUNCTION("getCollections", 1) {
+       auto stringify = runtime.global()
+               .getPropertyAsObject(runtime, "JSON")
+               .getPropertyAsFunction(runtime, "stringify");
+
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[0]);
+
+        auto method = javaPart_->getClass()->getMethod<void(GetAssetsCallback::javaobject)>("getCollections");
+
+        std::function<void(std::string)> wrapperOnChange = createCallback(resolve, false);
+        auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
+        method(javaPart_.get(), obj.get());
         return jsi::Value::undefined();
     });
 
@@ -71,18 +98,7 @@ void MediaLibrary::installJSIBindings() {
 
         auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("getAsset");
 
-         std::function<void(std::string)> wrapperOnChange =
-         [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-             j->invokeAsync([r, data, resolve]() {
-                 if (data.empty()) {
-                     resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                     return;
-                 }
-                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                 auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                 resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-             });
-         };
+        std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
          auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
          method(javaPart_.get(), params, obj.get());
@@ -100,18 +116,7 @@ void MediaLibrary::installJSIBindings() {
 
         auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("saveToLibrary");
 
-       std::function<void(std::string)> wrapperOnChange =
-       [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-           j->invokeAsync([r, data, resolve]() {
-               if (data.empty()) {
-                   resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                   return;
-               }
-               auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-               auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-               resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-           });
-       };
+        std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
        auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
        method(javaPart_.get(), params, obj.get());
@@ -129,18 +134,7 @@ void MediaLibrary::installJSIBindings() {
 
          auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("fetchVideoFrame");
 
-         std::function<void(std::string)> wrapperOnChange =
-                 [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-                     j->invokeAsync([r, data, resolve]() {
-                         if (data.empty()) {
-                             resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                             return;
-                         }
-                         auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                         auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                         resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-                     });
-                 };
+         std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
          auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
          method(javaPart_.get(), params, obj.get());
@@ -157,18 +151,7 @@ void MediaLibrary::installJSIBindings() {
 
        auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("combineImages");
 
-       std::function<void(std::string)> wrapperOnChange =
-               [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-                   j->invokeAsync([r, data, resolve]() {
-                       if (data.empty()) {
-                           resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                           return;
-                       }
-                       auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                       auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                       resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-                   });
-               };
+       std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
        auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
        method(javaPart_.get(), params, obj.get());
@@ -185,18 +168,7 @@ void MediaLibrary::installJSIBindings() {
 
        auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("imageResize");
 
-       std::function<void(std::string)> wrapperOnChange =
-           [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-               j->invokeAsync([r, data, resolve]() {
-                   if (data.empty()) {
-                       resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                       return;
-                   }
-                   auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                   auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                   resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-               });
-           };
+       std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
        auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
        method(javaPart_.get(), params, obj.get());
@@ -213,18 +185,7 @@ void MediaLibrary::installJSIBindings() {
 
        auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("imageSizes");
 
-       std::function<void(std::string)> wrapperOnChange =
-           [j = jsCallInvoker_, r = runtime_, resolve](const std::string& data) {
-               j->invokeAsync([r, data, resolve]() {
-                   if (data.empty()) {
-                       resolve->asObject(*r).asFunction(*r).call(*r, jsi::Value::undefined());
-                       return;
-                   }
-                   auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                   auto value = jsi::Value::createFromJsonUtf8(*r, str, data.size());
-                   resolve->asObject(*r).asFunction(*r).call(*r, std::move(value));
-               });
-           };
+       std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
 
        auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
        method(javaPart_.get(), params, obj.get());
@@ -239,6 +200,7 @@ void MediaLibrary::installJSIBindings() {
     exportModule.setProperty(*runtime_, "combineImages", std::move(combineImages));
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
     exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
+    exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

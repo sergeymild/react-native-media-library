@@ -3,6 +3,7 @@ package com.reactnativemedialibrary
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.ReactApplicationContext
@@ -58,6 +59,16 @@ class MediaLibrary(context: Context) {
         context,
         params.asJsonInput()
       )
+      callback.onChange(jsonArray.toString())
+    }
+  }
+
+  @DoNotStrip
+  fun getCollections(callback: GetAssetsCallback) {
+    println("😀 getCollections")
+    scope.launch {
+      val contentResolver = context.contentResolver
+      val jsonArray = contentResolver.getCollections(MEDIA_TYPE_IMAGE)
       callback.onChange(jsonArray.toString())
     }
   }

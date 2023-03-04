@@ -167,9 +167,6 @@ export const mediaLibrary = {
   },
 
   getCollections(): Promise<CollectionItem[]> {
-    if (Platform.OS === 'android') {
-      return Promise.resolve([]);
-    }
     return new Promise<CollectionItem[]>((resolve) => {
       __mediaLibrary.getCollections((response) => resolve(response));
     });

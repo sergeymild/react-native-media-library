@@ -10,8 +10,6 @@ import android.provider.MediaStore.Files.FileColumns.*
 import androidx.annotation.RequiresApi
 import org.json.JSONArray
 import org.json.JSONObject
-import java.lang.RuntimeException
-import java.util.Arrays
 
 fun String?.asJsonInput(): JSONObject {
   if (this != null) return JSONObject(this)
@@ -20,25 +18,18 @@ fun String?.asJsonInput(): JSONObject {
 
 var ASSET_PROJECTION = arrayOf(
   _ID,
-  MediaStore.Files.FileColumns.DISPLAY_NAME,
-  MediaStore.Files.FileColumns.DATA,
+  DISPLAY_NAME,
+  DATA,
   //MediaStore.Files.FileColumns.IS_FAVORITE,
   MEDIA_TYPE,
   MediaStore.MediaColumns.WIDTH,
   MediaStore.MediaColumns.HEIGHT,
   MediaLibrary.dateAdded,
-  MediaStore.Files.FileColumns.DATE_MODIFIED,
+  DATE_MODIFIED,
   MediaStore.Images.Media.ORIENTATION,
   MediaStore.Video.VideoColumns.DURATION,
   MediaStore.Images.Media.BUCKET_ID
 )
-
-private fun sortToColumnName(sort: String): String {
-  if (sort == "creationTime") return MediaLibrary.dateAdded
-  if (sort == "modificationTime") return MediaStore.Files.FileColumns.DATE_MODIFIED
-  throw RuntimeException("Unsupported $sort")
-}
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun Bundle.addLimitOffset(input: JSONObject) {
@@ -49,9 +40,9 @@ fun Bundle.addLimitOffset(input: JSONObject) {
 @RequiresApi(Build.VERSION_CODES.O)
 fun Bundle.addSort(input: JSONObject) {
   // Sort function
-  var field = MediaStore.Files.FileColumns.DATE_MODIFIED
+  var field = DATE_MODIFIED
   if (input.has("sortBy") && input.getString("sortBy") == "creationTime") {
-    field = MediaStore.Files.FileColumns.DATE_ADDED
+    field = DATE_ADDED
   }
   putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(field))
 
@@ -64,10 +55,24 @@ fun Bundle.addSort(input: JSONObject) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun Bundle.sqlSelection(input: String) {
+  putString(ContentResolver.QUERY_ARG_SQL_SELECTION, input)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun Bundle.sqlArgs(selectionArgs: Array<String>) {
+  putStringArray(
+    ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+    selectionArgs
+  )
+}
+
+
 fun addLegacySort(input: JSONObject): String {
-  var field = MediaStore.Files.FileColumns.DATE_MODIFIED
+  var field = DATE_MODIFIED
   if (input.has("sortBy") && input.getString("sortBy") == "creationTime") {
-    field = MediaStore.Files.FileColumns.DATE_ADDED
+    field = DATE_ADDED
   }
 
   var direction = "DESC"
@@ -80,8 +85,8 @@ fun addLegacySort(input: JSONObject): String {
 
 data class Tuple(val selection: String, val arguments: Array<String>)
 fun queryByMediaType(input: JSONObject): Tuple {
-  var selection = mutableListOf<String>()
-  var arguments = mutableListOf<String>()
+  val selection = mutableListOf<String>()
+  val arguments = mutableListOf<String>()
   if (input.has(AssetItemKeys.mediaType.name)) {
     val jsonArray = input.getJSONArray(AssetItemKeys.mediaType.name)
     for (i in (0 until jsonArray.length())) {
@@ -118,14 +123,43 @@ fun ContentResolver.listQuery(
   input: JSONObject,
 ): JSONArray {
   var (selection, arguments) = queryByMediaType(input)
-  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-    if (input.has("onlyFavorites") && input.getBoolean("onlyFavorites")) {
-      //if (selection.isNotEmpty()) selection += " AND "
-      //selection += "$IS_FAVORITE = 1"
-    }
+  if (input.has("collectionId")) {
+    if (selection.isNotEmpty()) selection = "($selection) AND "
+    selection += "${MediaStore.Images.Media.BUCKET_ID} = ?"
+    arguments = arrayOf(*arguments, input.getString("collectionId"))
   }
   println("⚽️ SELECT: $selection, ${arguments.contentToString()}")
   return makeQuery(uri, context, input, selection, arguments)
+}
+
+fun ContentResolver.getCollections(mediaType: Int): JSONArray {
+  var contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+  if (mediaType == MEDIA_TYPE_VIDEO) {
+    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+  }
+
+  val projection = arrayOf(MediaStore.Images.ImageColumns.BUCKET_ID, MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME)
+  val cursor = this.query(contentUri, projection, null, null, null)
+
+  val array = JSONArray()
+  val unique = mutableSetOf<String>()
+  if (cursor != null) {
+    while (cursor.moveToNext()) {
+      val name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME))
+      if (!unique.add(name)) {
+        continue
+      }
+      val bucketId = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.BUCKET_ID))
+      val item = JSONObject()
+      item.put("filename", name)
+      item.put("id", bucketId)
+      array.put(item)
+    }
+    cursor.close()
+
+  }
+  return array
+
 }
 
 fun ContentResolver.singleQuery(
@@ -160,15 +194,10 @@ fun ContentResolver.makeQuery(
       uri,
       ASSET_PROJECTION,
       Bundle().apply {
-        // Limit & Offset
         addLimitOffset(input)
         addSort(input)
-        // Selection
-        putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
-        putStringArray(
-          ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
-          selectionArgs
-        )
+        sqlSelection(selection)
+        sqlArgs(selectionArgs)
       }, null
     )
   } else {

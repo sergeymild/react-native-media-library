@@ -47,6 +47,7 @@ namespace mediaLibrary {
         static void registerNatives();
 
         void installJSIBindings();
+        std::function<void(std::string)> createCallback(const std::shared_ptr<facebook::jsi::Value>& resolve, bool returnUndefinedOnEmpty);
 
     private:
         friend HybridBase;

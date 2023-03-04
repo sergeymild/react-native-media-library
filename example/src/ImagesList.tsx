@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AssetItem, mediaLibrary } from 'react-native-media-library';
-import { Dimensions, FlatList, Image } from 'react-native';
+import { Dimensions, FlatList } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
 const width = Dimensions.get('window').width;
@@ -10,7 +10,11 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   const [images, setImages] = useState<AssetItem[]>([]);
 
   useEffect(() => {
-    mediaLibrary.getAssets({ collectionId: props.collection }).then(setImages);
+    mediaLibrary
+      .getAssets({
+        collectionId: props.collection === '-1' ? undefined : props.collection,
+      })
+      .then(setImages);
 
     // mediaLibrary
     //   .imageSizes({

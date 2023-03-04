@@ -33,6 +33,11 @@ export const CollectionsList: React.FC<{
     <FlatList<CollectionItem>
       numColumns={3}
       data={images}
+      ListEmptyComponent={
+        <TouchableOpacity onPress={() => props.setOpenCollection('-1')}>
+          <Text>Open All</Text>
+        </TouchableOpacity>
+      }
       style={{ marginTop: 100 }}
       renderItem={(info) => {
         return (
