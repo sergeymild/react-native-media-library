@@ -43,6 +43,11 @@ import { mediaLibrary } from "react-native-media-library";
 
 // ...
 
+export interface CollectionItem {
+  readonly filename: string;
+  readonly id: string;
+}
+
 interface Options {
   mediaType?: MediaType[];
   sortBy?: 'creationTime' | 'modificationTime';
@@ -51,6 +56,7 @@ interface Options {
   requestUrls?: boolean;
   limit?: number;
   offset?: number;
+  collectionId?: string;
 }
 
 interface SaveToLibrary {
@@ -95,6 +101,7 @@ export interface ImageResizeParams {
   resultSavePath: string;
 }
 
+mediaLibrary.getCollections(): Promise<CollectionItem[]>
 mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
 // will return save asset or error string
