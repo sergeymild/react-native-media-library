@@ -21,6 +21,7 @@ typedef void (^FetchAssetBlock)(json::object);
               limit:(int)limit
              sortBy:(NSString* _Nullable)sortBy
           sortOrder:(NSString* _Nullable)sortOrder
+          mediaType:(NSArray* _Nonnull)mediaType
          collection:(NSString* _Nullable)collectionId;
 
 

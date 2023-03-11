@@ -96,6 +96,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         auto rawSortBy = params.getProperty(*runtime_, "sortBy");
         auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
         auto rawOnlyFavorites = params.getProperty(*runtime_, "onlyFavorites");
+        auto rawMediaTypes = params
+            .getProperty(*runtime_, "mediaType")
+            .asObject(runtime)
+            .asArray(runtime);
         auto rawCollectionId = params.getProperty(*runtime_, "collectionId");
         if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
@@ -114,6 +118,13 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         }
 
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        NSMutableArray *mediaType = [[NSMutableArray alloc] init];
+        
+        for (int i = 0; i < rawMediaTypes.size(runtime); i++) {
+            auto type =rawMediaTypes.getValueAtIndex(runtime, i);
+            [mediaType addObject:[Helpers toString:type.asString(runtime) runtime_:&runtime]];
+        }
 
         dispatch_async(defQueue, ^{
             json::array results;
@@ -121,6 +132,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                limit:limit
                                               sortBy:sortBy
                                            sortOrder:sortOrder
+                                           mediaType:mediaType
                                           collection:collectionId];
  
             std::string resultString = json::stringify(results);

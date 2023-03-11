@@ -12,6 +12,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   useEffect(() => {
     mediaLibrary
       .getAssets({
+        mediaType: ['video'],
         collectionId: props.collection === '-1' ? undefined : props.collection,
       })
       .then(setImages);
@@ -48,7 +49,11 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
               uri: info.item.uri,
               resizeSize: { width: width / 3, height: width / 3 },
             }}
-            style={{ width: width / 3, height: width / 3 }}
+            style={{
+              width: width / 3,
+              height: width / 3,
+              backgroundColor: 'yellow',
+            }}
           />
         );
       }}
