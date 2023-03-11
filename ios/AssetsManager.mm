@@ -53,6 +53,7 @@
               limit:(int)limit
              sortBy:(NSString* _Nullable)sortBy
           sortOrder:(NSString* _Nullable)sortOrder
+          mediaType:(NSArray* _Nonnull)mediaType
          collection:(NSString* _Nullable)collectionId {
     PHCollection* _Nullable collection;
     if (collectionId) {
@@ -62,6 +63,15 @@
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
     fetchOptions.includeAllBurstAssets = false;
     fetchOptions.includeHiddenAssets = false;
+    
+    if (!([mediaType containsObject:@"photo"] && [mediaType containsObject:@"video"])) {
+        PHAssetMediaType type = PHAssetMediaTypeImage;
+        if ([mediaType containsObject:@"video"]) {
+            type = PHAssetMediaTypeVideo;
+        }
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"mediaType = %d",type];
+        [fetchOptions setPredicate:predicate];
+    }
     
     if (limit > 0) fetchOptions.fetchLimit = limit;
     
