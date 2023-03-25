@@ -51,6 +51,7 @@
 
 -(void) fetchAssets:(json::array*)results
               limit:(int)limit
+              offset:(int)offset
              sortBy:(NSString* _Nullable)sortBy
           sortOrder:(NSString* _Nullable)sortOrder
           mediaType:(NSArray* _Nonnull)mediaType
@@ -73,7 +74,7 @@
         [fetchOptions setPredicate:predicate];
     }
     
-    if (limit > 0) fetchOptions.fetchLimit = limit;
+    if (limit > 0 && offset == -1) fetchOptions.fetchLimit = limit;
     
     // sort
     if (sortBy != NULL && ![sortBy isEqualToString:@""]) {
@@ -94,9 +95,15 @@
         result = [PHAsset fetchAssetsWithOptions:fetchOptions];
     }
     
-    results->reserve(result.count);
+    int totalCount = result.count;
+    int startIndex = MAX(0, offset == -1 ? -1 : offset + 1);
+    int endIndex = MIN(startIndex + limit, totalCount);
+    if (startIndex == endIndex) return;
     
-    for (int i = 0; i < result.count; i++) {
+    results->reserve(endIndex - startIndex);
+    NSLog(@"fetchFrom: %d to: %d, total: %lu", startIndex, endIndex, (unsigned long)result.count);
+
+    for (int i = startIndex; i < endIndex; i++) {
         PHAsset* asset = [result objectAtIndex:i];
         json::object object;
         [self pHAssetToJSON:asset object:&object];

@@ -161,6 +161,11 @@ export const mediaLibrary = {
       onlyFavorites: options?.onlyFavorites ?? false,
       collectionId: options?.collectionId,
     };
+    if (params.offset && !params.limit) {
+      throw new Error(
+        'limit parameter must be present in order to make a pagination'
+      );
+    }
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
     });

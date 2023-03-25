@@ -12,8 +12,8 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   useEffect(() => {
     mediaLibrary
       .getAssets({
-        mediaType: ['video'],
         collectionId: props.collection === '-1' ? undefined : props.collection,
+        limit: 10,
       })
       .then(setImages);
 
@@ -39,6 +39,17 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
       data={images}
       windowSize={1}
       style={{ flex: 1, backgroundColor: 'red' }}
+      onEndReached={() => {
+        console.log('[ImagesList.onEndReached]');
+        mediaLibrary
+          .getAssets({
+            collectionId:
+              props.collection === '-1' ? undefined : props.collection,
+            limit: 10,
+            offset: images.length - 1,
+          })
+          .then((r) => setImages([...images, ...r]));
+      }}
       renderItem={(info) => {
         return (
           <FastImage

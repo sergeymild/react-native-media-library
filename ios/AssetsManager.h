@@ -19,6 +19,7 @@ typedef void (^FetchAssetBlock)(json::object);
 
 -(void) fetchAssets:(json::array* _Nonnull)results
               limit:(int)limit
+             offset:(int)offset
              sortBy:(NSString* _Nullable)sortBy
           sortOrder:(NSString* _Nullable)sortOrder
           mediaType:(NSArray* _Nonnull)mediaType

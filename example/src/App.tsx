@@ -35,8 +35,6 @@ export default function App() {
   const [image, setImage] = useState();
   const [openCollection, setOpenCollection] = useState<string | undefined>();
 
-  console.log('[App.App]', image);
-
   if (openCollection) {
     return <ImagesList collection={openCollection} />;
   }

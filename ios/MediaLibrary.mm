@@ -86,6 +86,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
         int limit = -1;
+        int offset = -1;
         NSString *sortBy = NULL;
         NSString *collectionId = NULL;
         NSString *sortOrder = NULL;
@@ -93,6 +94,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         auto params = args[0].asObject(runtime);
         auto rawLimit = params.getProperty(*runtime_, "limit");
+        auto rawOffset = params.getProperty(*runtime_, "offset");
         auto rawSortBy = params.getProperty(*runtime_, "sortBy");
         auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
         auto rawOnlyFavorites = params.getProperty(*runtime_, "onlyFavorites");
@@ -102,6 +104,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             .asArray(runtime);
         auto rawCollectionId = params.getProperty(*runtime_, "collectionId");
         if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
+        if (!rawOffset.isUndefined()) offset = rawOffset.asNumber();
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
             sortBy = [Helpers toString:rawSortBy.asString(runtime) runtime_:&runtime];
         }
@@ -130,6 +133,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             json::array results;
             [AssetsManager.sharedManager fetchAssets:&results
                                                limit:limit
+                                              offset:offset
                                               sortBy:sortBy
                                            sortOrder:sortOrder
                                            mediaType:mediaType
