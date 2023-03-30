@@ -30,23 +30,42 @@
     auto albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
     
     results->reserve(smartAlbums.count + albums.count);
+    NSOperationQueue* queue = [NSOperationQueue new];
 
     for (int i = 0; i < smartAlbums.count; i++) {
-        PHAssetCollection* asset = [smartAlbums objectAtIndex:i];
-        json::object object;
-        object.insert("filename", [Helpers toCString:asset.localizedTitle]);
-        object.insert("id", [Helpers toCString:asset.localIdentifier]);
-        results->push_back(object);
+        NSOperation* op = [NSBlockOperation blockOperationWithBlock:^{
+            PHAssetCollection* asset = [smartAlbums objectAtIndex:i];
+            json::object object;
+            object.insert("filename", [Helpers toCString:asset.localizedTitle]);
+            object.insert("count", [self fetchCollectionCount:asset]);
+            object.insert("id", [Helpers toCString:asset.localIdentifier]);
+            results->push_back(object);
+        }];
+        [queue addOperation:op];
     }
     
     for (int i = 0; i < albums.count; i++) {
-        PHAssetCollection* asset = [albums objectAtIndex:i];
-        json::object object;
-        object.insert("filename", [Helpers toCString:asset.localizedTitle]);
-        object.insert("count", (int)asset.estimatedAssetCount);
-        object.insert("id", [Helpers toCString:asset.localIdentifier]);
-        results->push_back(object);
+        NSOperation* op = [NSBlockOperation blockOperationWithBlock:^{
+            PHAssetCollection* asset = [albums objectAtIndex:i];
+            json::object object;
+            object.insert("filename", [Helpers toCString:asset.localizedTitle]);
+            object.insert("count", [self fetchCollectionCount:asset]);
+            object.insert("id", [Helpers toCString:asset.localIdentifier]);
+            results->push_back(object);
+        }];
+        [queue addOperation:op];
     }
+    
+    [queue waitUntilAllOperationsAreFinished];
+}
+
+-(NSUInteger)fetchCollectionCount:(PHAssetCollection* _Nonnull)collection {
+    PHFetchOptions *fetchOptions = [PHFetchOptions new];
+    fetchOptions.includeAllBurstAssets = false;
+    fetchOptions.includeHiddenAssets = false;
+    fetchOptions.fetchLimit = 0;
+    auto result = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    return result.count;
 }
 
 -(void) fetchAssets:(json::array*)results

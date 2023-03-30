@@ -27,8 +27,6 @@ export const CollectionsList: React.FC<{
   //   )
   // );
 
-  console.log('[CollectionsList.CollectionsList]', images);
-
   return (
     <FlatList<CollectionItem>
       numColumns={3}
@@ -40,6 +38,7 @@ export const CollectionsList: React.FC<{
       }
       style={{ marginTop: 100 }}
       renderItem={(info) => {
+        //console.log('[CollectionsList.]', info.item);
         return (
           <TouchableOpacity
             onPress={() => props.setOpenCollection(info.item.id)}
