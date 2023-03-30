@@ -28,7 +28,7 @@
 -(void) fetchCollections:(json::array*)results {
     auto smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
     auto albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
-    
+
     results->reserve(smartAlbums.count + albums.count);
     NSOperationQueue* queue = [NSOperationQueue new];
 
@@ -43,7 +43,7 @@
         }];
         [queue addOperation:op];
     }
-    
+
     for (int i = 0; i < albums.count; i++) {
         NSOperation* op = [NSBlockOperation blockOperationWithBlock:^{
             PHAssetCollection* asset = [albums objectAtIndex:i];
@@ -55,7 +55,7 @@
         }];
         [queue addOperation:op];
     }
-    
+
     [queue waitUntilAllOperationsAreFinished];
 }
 
@@ -79,11 +79,11 @@
     if (collectionId) {
         collection = [PHAssetCollection fetchAssetCollectionsWithLocalIdentifiers:@[collectionId] options:nil].firstObject;
     }
-    
+
     PHFetchOptions *fetchOptions = [PHFetchOptions new];
     fetchOptions.includeAllBurstAssets = false;
     fetchOptions.includeHiddenAssets = false;
-    
+
     if (!([mediaType containsObject:@"photo"] && [mediaType containsObject:@"video"])) {
         PHAssetMediaType type = PHAssetMediaTypeImage;
         if ([mediaType containsObject:@"video"]) {
@@ -92,9 +92,9 @@
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"mediaType = %d",type];
         [fetchOptions setPredicate:predicate];
     }
-    
+
     if (limit > 0 && offset == -1) fetchOptions.fetchLimit = limit;
-    
+
     // sort
     if (sortBy != NULL && ![sortBy isEqualToString:@""]) {
         if ([sortBy isEqualToString: @"creationTime"] || [sortBy isEqualToString: @"modificationTime"]) {
@@ -106,19 +106,19 @@
             fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
         }
     }
-    
+
     PHFetchResult<PHAsset *> *result;
     if (collection != NULL) {
         result = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
     } else {
         result = [PHAsset fetchAssetsWithOptions:fetchOptions];
     }
-    
+
     int totalCount = result.count;
     int startIndex = MAX(0, offset == -1 ? -1 : offset + 1);
     int endIndex = MIN(startIndex + limit, totalCount);
     if (startIndex == endIndex) return;
-    
+
     results->reserve(endIndex - startIndex);
     NSLog(@"fetchFrom: %d to: %d, total: %lu", startIndex, endIndex, (unsigned long)result.count);
 
@@ -134,7 +134,7 @@
             object:(json::object* _Nonnull)object {
 
     PHAsset* asset = [self fetchRawAsset:identifier];
-    
+
     [self pHAssetToJSON:asset object:object];
     PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
     [options setNetworkAccessAllowed:true];
@@ -146,7 +146,7 @@
     if ([identifier hasPrefix:@"ph://"]) {
         identifier = [identifier stringByReplacingOccurrencesOfString:@"ph://" withString:@""];
     }
-    
+
     PHFetchOptions *options = [PHFetchOptions new];
     options.includeHiddenAssets = YES;
     options.includeAllBurstAssets = YES;
@@ -157,7 +157,7 @@
 -(void) pHAssetToJSON: (PHAsset* _Nonnull)asset
                object:(json::object* _Nonnull)object {
 
-    object->insert("fileName", [Helpers toCString:[asset valueForKey:@"filename"]]);
+    object->insert("filename", [Helpers toCString:[asset valueForKey:@"filename"]]);
     object->insert("id", [Helpers toCString:asset.localIdentifier]);
     object->insert("creationTime", [Helpers _exportDate:asset.creationDate]);
     object->insert("modificationTime", [Helpers _exportDate:asset.modificationDate]);
@@ -178,7 +178,7 @@
 -(NSString*)fetchAssetUrl :(PHAsset *)asset  {
     PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
     [options setNetworkAccessAllowed:true];
-    
+
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString *url = @"";
     if (asset.mediaType == PHAssetMediaTypeImage) {
