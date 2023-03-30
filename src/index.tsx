@@ -116,6 +116,8 @@ export interface AssetItem {
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
+  // On Android it will be approximate count
+  readonly count: number;
 }
 
 export interface ImageResizeParams {

@@ -38,7 +38,7 @@ export const CollectionsList: React.FC<{
       }
       style={{ marginTop: 100 }}
       renderItem={(info) => {
-        //console.log('[CollectionsList.]', info.item);
+        console.log('[CollectionsList.]', info.item);
         return (
           <TouchableOpacity
             onPress={() => props.setOpenCollection(info.item.id)}
