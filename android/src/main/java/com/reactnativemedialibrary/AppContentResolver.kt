@@ -23,6 +23,7 @@ var ASSET_PROJECTION = arrayOf(
   //MediaStore.Files.FileColumns.IS_FAVORITE,
   MEDIA_TYPE,
   MediaStore.MediaColumns.WIDTH,
+  MediaStore.MediaColumns.WIDTH,
   MediaStore.MediaColumns.HEIGHT,
   MediaLibrary.dateAdded,
   DATE_MODIFIED,
