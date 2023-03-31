@@ -5,12 +5,6 @@ React Native JSI access to user's media library
 ### Configure for iOS
 Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys to your Info.plist:
 
-### Install
-add this to `package.json`
-```
-"react-native-media-library":"sergeymild/react-native-media-library#0.71.4"
-```
-
 ```ts
 <key>NSPhotoLibraryUsageDescription</key>
 <string>Give $(PRODUCT_NAME) permission to access your photos</string>
