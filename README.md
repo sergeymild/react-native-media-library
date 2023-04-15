@@ -96,6 +96,18 @@ export interface ImageResizeParams {
   resultSavePath: string;
 }
 
+export interface ImageCropParams {
+  uri: ImageRequireSource | string;
+  // offset between 0 and 1 percents of original image
+  x: number;
+  // offset between 0 and 1 percents of original image
+  y: number;
+  width: number;
+  height: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
 mediaLibrary.getCollections(): Promise<CollectionItem[]>
 mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
@@ -115,6 +127,8 @@ mediaLibrary.combineImages(params: {
 
 // resize image based on passed width and height
 mediaLibrary.imageResize(params: ImageResizeParams): Promise<{ result: boolean }>
+// crop image based on passed offset
+mediaLibrary.imageCrop(params: ImageCropParams): Promise<{ result: boolean }>
 
 // resolve passed images sizes
 mediaLibrary.imageSizes(params: {
