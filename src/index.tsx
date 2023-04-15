@@ -53,6 +53,10 @@ declare global {
       params: ImageResizeParams,
       callback: (item: { result: boolean }) => void
     ): void;
+    imageCrop(
+      params: ImageCropParams,
+      callback: (item: { result: boolean }) => void
+    ): void;
 
     imageSizes(
       params: { images: string[] },
@@ -124,6 +128,16 @@ export interface ImageResizeParams {
   uri: ImageRequireSource | string;
   width?: number;
   height?: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
+export interface ImageCropParams {
+  uri: ImageRequireSource | string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   format?: 'jpeg' | 'png';
   resultSavePath: string;
 }
@@ -228,6 +242,19 @@ export const mediaLibrary = {
           format: params.format ?? 'png',
           height: params.height ?? -1,
           width: params.width ?? -1,
+        },
+        resolve
+      );
+    });
+  },
+
+  imageCrop(params: ImageCropParams) {
+    return new Promise<{ result: boolean }>((resolve) => {
+      __mediaLibrary.imageCrop(
+        {
+          ...params,
+          uri: prepareImage(params.uri),
+          format: params.format ?? 'png',
         },
         resolve
       );

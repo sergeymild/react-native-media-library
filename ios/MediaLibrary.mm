@@ -363,6 +363,42 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         
         return jsi::Value::undefined();
     });
+    
+    auto imageCrop = JSI_HOST_FUNCTION("imageCrop", 1) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        auto imageUri = params.getProperty(runtime, "uri").asString(runtime).utf8(runtime);
+        auto rawX = params.getProperty(runtime, "x").asNumber();
+        auto rawY = params.getProperty(runtime, "y").asNumber();
+        auto rawWidth = params.getProperty(runtime, "width").asNumber();
+        auto rawHeight = params.getProperty(runtime, "height").asNumber();
+        auto rawFormat = params.getProperty(runtime, "format").asString(runtime).utf8(runtime);
+        auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
+        
+        NSString *uri = [[NSString alloc] initWithCString:imageUri.c_str() encoding:NSUTF8StringEncoding];
+        NSString *format = [[NSString alloc] initWithCString:rawFormat.c_str() encoding:NSUTF8StringEncoding];
+        NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+        
+        dispatch_async(defQueue, ^{
+            auto result = [ImageResize crop:uri
+                                          x:[NSNumber numberWithDouble:rawX]
+                                          y:[NSNumber numberWithDouble:rawY]
+                                      width:[NSNumber numberWithDouble:rawWidth]
+                                     height:[NSNumber numberWithDouble:rawHeight]
+                                     format:format
+                             resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        });
+        
+        
+        return jsi::Value::undefined();
+    });
 
 
     auto exportModule = jsi::Object(*runtime_);
@@ -374,6 +410,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
     exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
+    exportModule.setProperty(*runtime_, "imageCrop", std::move(imageCrop));
     exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }

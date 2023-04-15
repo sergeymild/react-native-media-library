@@ -1,14 +1,18 @@
 package com.reactnativemedialibrary
 
+import android.R.attr
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.URL
+import kotlin.math.min
+
 
 fun toCompressFormat(format: String): Bitmap.CompressFormat {
   return when (format) {
@@ -79,6 +83,41 @@ object ManipulateImages {
         newWidth = if (newWidth == 0) (currentImageRatio * newHeight).toInt() else newWidth
       }
       bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+
+      file.outputStream().use { fileOut ->
+        bitmap.compress(toCompressFormat(format), 100, fileOut)
+      }
+      true
+    } catch (e: Throwable) {
+      Log.e("CombineImages", null, e)
+      false
+    }
+  }
+
+  fun imageCrop(input: JSONObject): Boolean {
+    val uri = input.getString("uri")
+    val x = input.getDouble("x")
+    val y = input.getDouble("y")
+    val width = input.getDouble("width")
+    val height = input.getDouble("height")
+    val format = input.getString("format")
+    val resultSavePath = input.getString("resultSavePath")
+    val file = File(resultSavePath)
+
+    return try {
+      var bitmap = getBitmapFromUrl(uri) ?: return false
+      var cropX = (x * bitmap.width).toInt()
+      if (cropX + width > bitmap.width) {
+        cropX = bitmap.width - width.toInt()
+      }
+
+      var cropY = (y * bitmap.height).toInt()
+      if (cropY + height > bitmap.height) {
+        cropY = bitmap.height - height.toInt()
+      }
+
+
+      bitmap = Bitmap.createBitmap(bitmap, cropX, cropY, width.toInt(), height.toInt(), null, true)
 
       file.outputStream().use { fileOut ->
         bitmap.compress(toCompressFormat(format), 100, fileOut)
