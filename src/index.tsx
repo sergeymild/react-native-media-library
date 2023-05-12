@@ -60,13 +60,13 @@ declare global {
 
     imageSizes(
       params: { images: string[] },
-      callback: (item: {
-        result: {
+      callback: (
+        items: {
           width: number;
           height: number;
           size: number;
-        }[];
-      }) => void
+        }[]
+      ) => void
     ): void;
 
     cacheDir(): string;
@@ -261,13 +261,13 @@ export const mediaLibrary = {
     });
   },
 
-  imageSizes(params: { images: ImagesTypes[] }): Promise<{
-    result: {
+  imageSizes(params: { images: ImagesTypes[] }): Promise<
+    {
       width: number;
       height: number;
       size: number;
-    }[];
-  }> {
+    }[]
+  > {
     return new Promise((resolve) => {
       __mediaLibrary.imageSizes(
         { images: prepareImages(params.images) },
