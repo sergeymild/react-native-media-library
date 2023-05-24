@@ -25,7 +25,7 @@ This package automatically adds the `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_
 
 ```sh
 add this line to `package.json`
-"react-native-media-library": "sergeymild/react-native-media-library#0.71.6"
+"react-native-media-library": "sergeymild/react-native-media-library#0.71.11"
 yarn
 npx pod-install
 ```
