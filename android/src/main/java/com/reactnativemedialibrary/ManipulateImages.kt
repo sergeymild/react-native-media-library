@@ -1,17 +1,15 @@
 package com.reactnativemedialibrary
 
-import android.R.attr
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 import java.net.URL
-import kotlin.math.min
 
 
 fun toCompressFormat(format: String): Bitmap.CompressFormat {
@@ -129,39 +127,49 @@ object ManipulateImages {
     }
   }
 
-
+  // TODO: rename to getImagesDimensions
   fun imageSizes(input: JSONObject): JSONArray {
     val imagesArray = input.getJSONArray("images")
-    val array = JSONArray()
+    val imagesDimensions = JSONArray()
+
+    Log.d("MediaLibrary", "getImagesDimensions")
+
     try {
       for (i in 0 until imagesArray.length()) {
         val url = imagesArray.getString(i)
-        val bitmap = getBitmapFromUrl(url) ?: return JSONArray()
-        val obj = JSONObject()
-        obj.put("width", bitmap.width)
-        obj.put("height", bitmap.height)
-        array.put(obj)
-        bitmap.recycle()
+        val imageInputStream: InputStream = getInputStreamByUrl(url)
+
+        val bitmapOptions: BitmapFactory.Options = BitmapFactory.Options()
+        bitmapOptions.inJustDecodeBounds = true
+        BitmapFactory.decodeStream(imageInputStream, null, bitmapOptions)
+
+        val imageDimensions = JSONObject()
+        imageDimensions.put("width", bitmapOptions.outWidth)
+        imageDimensions.put("height", bitmapOptions.outHeight)
+        imagesDimensions.put(imageDimensions)
       }
-    } catch (e: Throwable) {
-      Log.e("CombineImages", null, e)
+    } catch (error: Throwable) {
+      Log.e("MediaLibrary", "Couldn't determine Image Dimensions", error)
     }
-    return array
+
+    return imagesDimensions
   }
 
-  private fun getBitmapFromUrl(url: String): Bitmap? {
-    if (url.startsWith("http") || url.startsWith("file")) {
-      val con = URL(url).openConnection()
-      con.connect()
-      con.getInputStream().use {
-        return BitmapFactory.decodeStream(it)
-      }
+  private fun getInputStreamByUrl(url: String): InputStream {
+    return if (url.startsWith("http") || url.startsWith("file")) {
+      val urlConnection = URL(url).openConnection()
+      urlConnection.connect()
+      urlConnection.getInputStream()
     } else {
       val file = File(url)
-      if (!file.exists()) return null
-      file.inputStream().use {
-        return BitmapFactory.decodeStream(it)
-      }
+      if (!file.exists())
+        throw Exception("MediaLibrary.getInputStreamByUri is trying to access an non-existent File")
+      file.inputStream()
+    }
+  }
+  private fun getBitmapFromUrl(url: String): Bitmap? {
+    getInputStreamByUrl(url).use {
+      return BitmapFactory.decodeStream(it)
     }
   }
 }
