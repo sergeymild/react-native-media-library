@@ -189,7 +189,7 @@
         }];
     } else if (asset.mediaType == PHAssetMediaTypeVideo) {
         PHVideoRequestOptions* options = [[PHVideoRequestOptions alloc] init];
-        [options setVersion:PHVideoRequestOptionsVersionOriginal];
+//        [options setVersion:PHVideoRequestOptionsVersionOriginal];
         [options setNetworkAccessAllowed:true];
         [[PHImageManager defaultManager] requestAVAssetForVideo:asset
                                                         options:options
