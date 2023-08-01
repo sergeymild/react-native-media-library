@@ -3,11 +3,15 @@ package com.reactnativemedialibrary
 import android.content.ContentResolver
 import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import com.reactnativemedialibrary.AssetItemKeys.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
+import kotlin.math.abs
 
 private fun toSet(array: JSONArray): Set<String> {
   val strings = HashSet<String>(array.length())
@@ -26,6 +30,43 @@ private fun exportMediaType(mediaType: Int): String {
   }
 }
 
+private fun maybeRotateAssetSize(width: Int, height: Int, orientation: Int): IntArray {
+  // given width and height might need to be swapped if the orientation is -90 or 90
+  return if (abs(orientation) % 180 == 90) {
+    intArrayOf(height, width)
+  } else {
+    intArrayOf(width, height)
+  }
+}
+
+private fun getOrientation(cursor: Cursor, uri: String, mediaType: Int): Int {
+  val orientationIndex = cursor.getColumnIndex(MediaStore.Images.Media.ORIENTATION)
+  var orientation = cursor.getInt(orientationIndex)
+  if (mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE) {
+    var exifInterface: ExifInterface? = null
+    try {
+      exifInterface = ExifInterface(uri)
+    } catch (e: IOException) {
+      Log.w("media-library", "Could not parse EXIF tags for $uri")
+      e.printStackTrace()
+    }
+    if (exifInterface != null) {
+      val exifOrientation = exifInterface.getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_NORMAL
+      )
+      if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+        exifOrientation == ExifInterface.ORIENTATION_ROTATE_270 ||
+        exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+        exifOrientation == ExifInterface.ORIENTATION_TRANSVERSE
+      ) {
+        orientation = 90
+      }
+    }
+  }
+  return orientation
+}
+
 private fun getAssetDimensionsFromCursor(
   cursor: Cursor,
   contentResolver: ContentResolver,
@@ -39,12 +80,13 @@ private fun getAssetDimensionsFromCursor(
   val heightIndex = cursor.getColumnIndex(MediaStore.MediaColumns.HEIGHT)
   var width = cursor.getInt(widthIndex)
   var height = cursor.getInt(heightIndex)
+  val orientation = getOrientation(cursor, uri, mediaType)
   val isNoWH = (width <= 0 || height <= 0)
 
   if (isNoWH && mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
     val videoUri = Uri.parse("file://$uri")
     MediaLibraryUtils.retrieveWidthHeightFromMedia(contentResolver, videoUri, size)
-    if (size[0] > 0 && size[1] > 0) return size
+    if (size[0] > 0 && size[1] > 0) return maybeRotateAssetSize(size[0], size[1], orientation)
   }
 
   // If the image doesn't have the required information, we can get them from Bitmap.Options
@@ -55,7 +97,7 @@ private fun getAssetDimensionsFromCursor(
     width = options.outWidth
     height = options.outHeight
   }
-  return intArrayOf(width, height)
+  return maybeRotateAssetSize(width, height, orientation)
 }
 
 fun Cursor.mapToJson(

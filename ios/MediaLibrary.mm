@@ -65,14 +65,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSLog(@"===== %@", paths);
         return [Helpers toJSIString:paths runtime_:&runtime];
     });
-    
+
     auto getCollections = JSI_HOST_FUNCTION("getCollections", 1) {
         auto resolve = std::make_shared<jsi::Value>(runtime, args[0]);
 
         dispatch_async(defQueue, ^{
             json::array results;
             [AssetsManager.sharedManager fetchCollections:&results];
-            
+
             std::string resultString = json::stringify(results);
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -86,6 +86,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
         int limit = -1;
+        int offset = -1;
         NSString *sortBy = NULL;
         NSString *collectionId = NULL;
         NSString *sortOrder = NULL;
@@ -93,6 +94,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         auto params = args[0].asObject(runtime);
         auto rawLimit = params.getProperty(*runtime_, "limit");
+        auto rawOffset = params.getProperty(*runtime_, "offset");
         auto rawSortBy = params.getProperty(*runtime_, "sortBy");
         auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
         auto rawOnlyFavorites = params.getProperty(*runtime_, "onlyFavorites");
@@ -102,6 +104,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             .asArray(runtime);
         auto rawCollectionId = params.getProperty(*runtime_, "collectionId");
         if (!rawLimit.isUndefined()) limit = rawLimit.asNumber();
+        if (!rawOffset.isUndefined()) offset = rawOffset.asNumber();
         if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
             sortBy = [Helpers toString:rawSortBy.asString(runtime) runtime_:&runtime];
         }
@@ -116,25 +119,26 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
             sortOrder = [Helpers toString:rawSortOrder.asString(runtime) runtime_:&runtime];
         }
-        
+
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         NSMutableArray *mediaType = [[NSMutableArray alloc] init];
-        
+
         for (int i = 0; i < rawMediaTypes.size(runtime); i++) {
             auto type =rawMediaTypes.getValueAtIndex(runtime, i);
             [mediaType addObject:[Helpers toString:type.asString(runtime) runtime_:&runtime]];
         }
-        
+
         dispatch_async(defQueue, ^{
             json::array results;
             [AssetsManager.sharedManager fetchAssets:&results
                                                limit:limit
+                                              offset:offset
                                               sortBy:sortBy
                                            sortOrder:sortOrder
                                            mediaType:mediaType
                                           collection:collectionId];
- 
+
             std::string resultString = json::stringify(results);
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -247,23 +251,23 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         return jsi::Value::undefined();
     });
-    
+
     auto combineImages = JSI_HOST_FUNCTION("combineImages", 2) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         auto imagesRawArray = params.getPropertyAsObject(runtime, "images").asArray(runtime);
         auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
         auto arraySize = imagesRawArray.size(runtime);
         NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
-        
+
         NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
-        
+
         for (int i = 0; i < arraySize; i++) {
             auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
             [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
         }
-        
+
         dispatch_async(defQueue, ^{
             NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
             for (NSString* path in imagesPathArray) {
@@ -271,7 +275,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 [imagesArray addObject:image];
             }
             auto result = [CombineImages combineImages:imagesArray resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
@@ -279,31 +283,31 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             });
         });
 
-        
+
         return jsi::Value::undefined();
     });
-    
+
     auto imageSizes = JSI_HOST_FUNCTION("imageSizes", 2) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         auto imagesRawArray = params.getPropertyAsObject(runtime, "images").asArray(runtime);
         auto arraySize = imagesRawArray.size(runtime);
-        
+
         NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
-        
+
         for (int i = 0; i < arraySize; i++) {
             auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
             [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
         }
-        
+
         dispatch_async(defQueue, ^{
             json::array jsonResultArray;
             for (NSString* path in imagesPathArray) {
                 json::object object;
                 if ([path hasPrefix:@"ph://"]) {
                     PHAsset* asset = [AssetsManager.sharedManager fetchRawAsset:path];
-                    
+
                     object.insert("width", (double)asset.pixelWidth);
                     object.insert("height", (double)asset.pixelHeight);
                 } else {
@@ -314,7 +318,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 jsonResultArray.push_back(object);
             }
             auto resultString = json::stringify(jsonResultArray);
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
@@ -322,33 +326,33 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             });
         });
 
-        
+
         return jsi::Value::undefined();
     });
-    
+
     auto imageResize = JSI_HOST_FUNCTION("imageResize", 1) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         auto imageUri = params.getProperty(runtime, "uri").asString(runtime).utf8(runtime);
         auto rawWidth = params.getProperty(runtime, "width").asNumber();
         auto rawHeight = params.getProperty(runtime, "height").asNumber();
         auto rawFormat = params.getProperty(runtime, "format").asString(runtime).utf8(runtime);
         auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
-        
+
         NSString *uri = [[NSString alloc] initWithCString:imageUri.c_str() encoding:NSUTF8StringEncoding];
         NSString *format = [[NSString alloc] initWithCString:rawFormat.c_str() encoding:NSUTF8StringEncoding];
         NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
         NSNumber *width = [NSNumber numberWithDouble:rawWidth];
         NSNumber *height = [NSNumber numberWithDouble:rawHeight];
-        
+
         dispatch_async(defQueue, ^{
             auto result = [ImageResize resize:uri
                                         width:width
                                        height:height
                                        format:format
                                resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
@@ -356,7 +360,43 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             });
         });
 
-        
+
+        return jsi::Value::undefined();
+    });
+
+    auto imageCrop = JSI_HOST_FUNCTION("imageCrop", 1) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+
+        auto imageUri = params.getProperty(runtime, "uri").asString(runtime).utf8(runtime);
+        auto rawX = params.getProperty(runtime, "x").asNumber();
+        auto rawY = params.getProperty(runtime, "y").asNumber();
+        auto rawWidth = params.getProperty(runtime, "width").asNumber();
+        auto rawHeight = params.getProperty(runtime, "height").asNumber();
+        auto rawFormat = params.getProperty(runtime, "format").asString(runtime).utf8(runtime);
+        auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
+
+        NSString *uri = [[NSString alloc] initWithCString:imageUri.c_str() encoding:NSUTF8StringEncoding];
+        NSString *format = [[NSString alloc] initWithCString:rawFormat.c_str() encoding:NSUTF8StringEncoding];
+        NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+
+        dispatch_async(defQueue, ^{
+            auto result = [ImageResize crop:uri
+                                          x:[NSNumber numberWithDouble:rawX]
+                                          y:[NSNumber numberWithDouble:rawY]
+                                      width:[NSNumber numberWithDouble:rawWidth]
+                                     height:[NSNumber numberWithDouble:rawHeight]
+                                     format:format
+                             resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        });
+
+
         return jsi::Value::undefined();
     });
 
@@ -370,6 +410,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
     exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
+    exportModule.setProperty(*runtime_, "imageCrop", std::move(imageCrop));
     exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }

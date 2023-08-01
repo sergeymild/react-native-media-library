@@ -53,16 +53,20 @@ declare global {
       params: ImageResizeParams,
       callback: (item: { result: boolean }) => void
     ): void;
+    imageCrop(
+      params: ImageCropParams,
+      callback: (item: { result: boolean }) => void
+    ): void;
 
     imageSizes(
       params: { images: string[] },
-      callback: (item: {
-        result: {
+      callback: (
+        items: {
           width: number;
           height: number;
           size: number;
-        }[];
-      }) => void
+        }[]
+      ) => void
     ): void;
 
     cacheDir(): string;
@@ -116,12 +120,24 @@ export interface AssetItem {
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
+  // On Android it will be approximate count
+  readonly count: number;
 }
 
 export interface ImageResizeParams {
   uri: ImageRequireSource | string;
   width?: number;
   height?: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
+export interface ImageCropParams {
+  uri: ImageRequireSource | string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   format?: 'jpeg' | 'png';
   resultSavePath: string;
 }
@@ -161,6 +177,11 @@ export const mediaLibrary = {
       onlyFavorites: options?.onlyFavorites ?? false,
       collectionId: options?.collectionId,
     };
+    if (params.offset && !params.limit) {
+      throw new Error(
+        'limit parameter must be present in order to make a pagination'
+      );
+    }
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
     });
@@ -227,13 +248,26 @@ export const mediaLibrary = {
     });
   },
 
-  imageSizes(params: { images: ImagesTypes[] }): Promise<{
-    result: {
+  imageCrop(params: ImageCropParams) {
+    return new Promise<{ result: boolean }>((resolve) => {
+      __mediaLibrary.imageCrop(
+        {
+          ...params,
+          uri: prepareImage(params.uri),
+          format: params.format ?? 'png',
+        },
+        resolve
+      );
+    });
+  },
+
+  imageSizes(params: { images: ImagesTypes[] }): Promise<
+    {
       width: number;
       height: number;
       size: number;
-    }[];
-  }> {
+    }[]
+  > {
     return new Promise((resolve) => {
       __mediaLibrary.imageSizes(
         { images: prepareImages(params.images) },

@@ -5,12 +5,6 @@ React Native JSI access to user's media library
 ### Configure for iOS
 Add NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription keys to your Info.plist:
 
-### Install
-add this to `package.json`
-```
-"react-native-media-library":"sergeymild/react-native-media-library#0.18.0"
-```
-
 ```ts
 <key>NSPhotoLibraryUsageDescription</key>
 <string>Give $(PRODUCT_NAME) permission to access your photos</string>
@@ -31,7 +25,7 @@ This package automatically adds the `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_
 
 ```sh
 add this line to `package.json`
-"react-native-media-library": "sergeymild/react-native-media-library#0.0.1"
+"react-native-media-library": "sergeymild/react-native-media-library#0.71.11"
 yarn
 npx pod-install
 ```
@@ -46,6 +40,7 @@ import { mediaLibrary } from "react-native-media-library";
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
+  readonly count: number;
 }
 
 interface Options {
@@ -101,6 +96,18 @@ export interface ImageResizeParams {
   resultSavePath: string;
 }
 
+export interface ImageCropParams {
+  uri: ImageRequireSource | string;
+  // offset between 0 and 1 percents of original image
+  x: number;
+  // offset between 0 and 1 percents of original image
+  y: number;
+  width: number;
+  height: number;
+  format?: 'jpeg' | 'png';
+  resultSavePath: string;
+}
+
 mediaLibrary.getCollections(): Promise<CollectionItem[]>
 mediaLibrary.getAssets(options?: Options): Promise<AssetItem[]>
 mediaLibrary.getAsset(id: string): Promise<FullAssetItem | undefined>
@@ -120,6 +127,8 @@ mediaLibrary.combineImages(params: {
 
 // resize image based on passed width and height
 mediaLibrary.imageResize(params: ImageResizeParams): Promise<{ result: boolean }>
+// crop image based on passed offset
+mediaLibrary.imageCrop(params: ImageCropParams): Promise<{ result: boolean }>
 
 // resolve passed images sizes
 mediaLibrary.imageSizes(params: {

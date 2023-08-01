@@ -14,6 +14,8 @@ import FastImage from 'react-native-fast-image';
 import FS, { getAllExternalFilesDirs } from 'react-native-fs';
 import { ImagesList } from './ImagesList';
 import { CollectionsList } from './CollectionsList';
+import { ImagesMerge } from './ImagesMerge';
+import { CropImageExample } from './CropImageExample';
 
 const requestCameraPermission = async () => {
   try {
@@ -34,12 +36,16 @@ const requestCameraPermission = async () => {
 export default function App() {
   const [image, setImage] = useState();
   const [openCollection, setOpenCollection] = useState<string | undefined>();
+  // requestCameraPermission();
+  // if (true) {
+  //   return <ImagesMerge />;
+  // }
 
-  console.log('[App.App]', image);
+  // if (openCollection) {
+  //   return <ImagesList collection={openCollection} />;
+  // }
 
-  if (openCollection) {
-    return <ImagesList collection={openCollection} />;
-  }
+  return <CropImageExample />;
 
   return <CollectionsList setOpenCollection={setOpenCollection} />;
 
@@ -50,7 +56,6 @@ export default function App() {
         onPress={async () => {
           const start = Date.now();
 
-          // await requestCameraPermission();
           //
           // const result = await mediaLibrary.getAssets({
           //   limit: 10,

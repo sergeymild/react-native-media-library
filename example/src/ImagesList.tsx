@@ -14,6 +14,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
       .getAssets({
         mediaType: ['video'],
         collectionId: props.collection === '-1' ? undefined : props.collection,
+        limit: 1,
       })
       .then(setImages);
 
@@ -38,8 +39,20 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
       numColumns={3}
       data={images}
       windowSize={1}
-      style={{ flex: 1, backgroundColor: 'red' }}
+      style={{ flex: 1 }}
+      onEndReached={() => {
+        console.log('[ImagesList.onEndReached]');
+        mediaLibrary
+          .getAssets({
+            collectionId:
+              props.collection === '-1' ? undefined : props.collection,
+            limit: 10,
+            offset: images.length - 1,
+          })
+          .then((r) => setImages([...images, ...r]));
+      }}
       renderItem={(info) => {
+        console.log('[ImagesList.]', info.item.width, info.item.height);
         return (
           <FastImage
             resizeSize={{ width: width / 3, height: width / 3 }}

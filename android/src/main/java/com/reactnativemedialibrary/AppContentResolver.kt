@@ -23,6 +23,7 @@ var ASSET_PROJECTION = arrayOf(
   //MediaStore.Files.FileColumns.IS_FAVORITE,
   MEDIA_TYPE,
   MediaStore.MediaColumns.WIDTH,
+  MediaStore.MediaColumns.WIDTH,
   MediaStore.MediaColumns.HEIGHT,
   MediaLibrary.dateAdded,
   DATE_MODIFIED,
@@ -142,17 +143,22 @@ fun ContentResolver.getCollections(mediaType: Int): JSONArray {
   val cursor = this.query(contentUri, projection, null, null, null)
 
   val array = JSONArray()
-  val unique = mutableSetOf<String>()
+  val buckets = mutableMapOf<String, JSONObject>()
   if (cursor != null) {
     while (cursor.moveToNext()) {
       val name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME))
-      if (!unique.add(name)) {
+      val bucketId = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.BUCKET_ID))
+      if (buckets.containsKey(bucketId)) {
+        var count = buckets[bucketId]!!.getInt("count")
+        if (count == 0) count = 1
+        buckets[bucketId]!!.put("count", count + 1)
         continue
       }
-      val bucketId = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.BUCKET_ID))
       val item = JSONObject()
       item.put("filename", name)
       item.put("id", bucketId)
+      item.put("count", 0)
+      buckets[bucketId] = item
       array.put(item)
     }
     cursor.close()

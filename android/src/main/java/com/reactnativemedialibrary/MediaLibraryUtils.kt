@@ -1,6 +1,7 @@
 package com.reactnativemedialibrary
 
 import android.content.ContentResolver
+import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
@@ -15,10 +16,7 @@ import androidx.exifinterface.media.ExifInterface
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
-import java.io.FileDescriptor
 import java.io.IOException
-import java.io.UnsupportedEncodingException
-import java.net.URLDecoder
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -56,23 +54,29 @@ object MediaLibraryUtils {
     )
   }
 
-  fun getFileNameAndExtension(name: String): Array<String> {
-    var dotIdx = name.length
-    if (name.lastIndexOf(".") != -1) {
-      dotIdx = name.lastIndexOf(".")
+  fun copyBitmapToFile(
+    bitmap: Bitmap,
+    path: String,
+    format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG,
+    quality: Int = 100,
+  ): Boolean {
+    val file = File(path)
+    if (file.extension.isEmpty()) {
+      println("ERROR: extension must be present, FILE: ${file.absolutePath}")
+      return false
     }
-    val extension = name.substring(dotIdx)
-    val filename = name.substring(0, dotIdx)
-    return arrayOf(filename, extension)
+    return File(path).outputStream().use { output ->
+      return@use bitmap.compress(format, quality, output)
+    }
   }
 
   @Throws(IOException::class, JSONException::class)
   fun safeCopyFile(src: File, destDir: File?): Any {
+    println("👌 ${src.absolutePath}")
     var newFile = File(destDir, src.name)
     var suffix = 0
-    val fileNameAndExtension = getFileNameAndExtension(src.name)
-    val filename = fileNameAndExtension[0]
-    val extension = fileNameAndExtension[1]
+    val filename = src.nameWithoutExtension
+    val extension = src.extension
     val suffixLimit = Short.MAX_VALUE.toInt()
     while (newFile.exists()) {
       newFile = File(destDir, filename + "_" + suffix + extension)
