@@ -9,7 +9,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FastImage from 'react-native-fast-image';
 import FS, { getAllExternalFilesDirs } from 'react-native-fs';
 import { ImagesList } from './ImagesList';
