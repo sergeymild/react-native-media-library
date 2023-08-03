@@ -144,6 +144,17 @@ extension PHImageManager {
 
 @objc
 open class MediaAssetManager: NSObject {
+    @objc
+    public static func fetchRawAsset(identifier: String) -> PHAsset? {
+        let identifier = identifier.replacingOccurrences(of: "ph://", with: "")
+        let options = PHFetchOptions()
+        options.includeHiddenAssets = true;
+        options.includeAllBurstAssets = true;
+        options.fetchLimit = 1;
+        return PHAsset.fetchAssets(
+            withLocalIdentifiers: [identifier],
+            options: options).firstObject
+    }
     
     @objc
     public static func fetchAsset(identifier: String, completion: @escaping (AssetData?) -> Void) {
@@ -153,9 +164,7 @@ open class MediaAssetManager: NSObject {
             options.includeHiddenAssets = true;
             options.includeAllBurstAssets = true;
             options.fetchLimit = 1;
-            let rawAsset = PHAsset.fetchAssets(
-                withLocalIdentifiers: [identifier],
-                options: options).firstObject
+            let rawAsset = fetchRawAsset(identifier: identifier)
             
             guard let asset = rawAsset else { return completion(nil) }
 

@@ -21,13 +21,11 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
         })
 
       setImages(media)
-
-      const a = await mediaLibrary.getAsset(media[0]!.id)
-      const rs = await mediaLibrary.saveToLibrary({
-        album: 'newO',
-        localUrl: a!.url
-      })
-      console.log('[ImagesList.saveToCamera]', rs)
+      // const rs = await mediaLibrary.saveToLibrary({
+      //   album: 'newO',
+      //   localUrl: a!.url
+      // })
+      // console.log('[ImagesList.saveToCamera]', rs)
     })()
 
     // mediaLibrary

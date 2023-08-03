@@ -7,7 +7,6 @@
 //
 
 #import "CombineImages.h"
-#import "ImageSize.h"
 
 @implementation CombineImages
 
@@ -36,7 +35,7 @@
         return false;
     }
     
-    return [ImageSize save:finalImage format:@"png" path:resultSavePath];
+    return [LibraryImageSize saveWithImage:finalImage format:@"png" path:resultSavePath];
 }
 
 @end

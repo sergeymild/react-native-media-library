@@ -7,7 +7,6 @@
 //
 
 #import "ImageResize.h"
-#import "ImageSize.h"
 #import "RCTImageUtils.h"
 
 @implementation ImageResize
@@ -16,8 +15,7 @@
               height:(NSNumber*)height
               format:(NSString*)format
       resultSavePath:(NSString* _Nonnull) resultSavePath {
-    
-    UIImage *image = [ImageSize uiImage:uri];
+    UIImage *image = [LibraryImageSize imageWithPath:uri];
     
     CGFloat imageWidth = image.size.width;
     CGFloat imageHeight = image.size.height;
@@ -43,8 +41,7 @@
         NSLog(@"empty context");
         return false;
     }
-    
-    return [ImageSize save:finalImage format:format path:resultSavePath];
+    return [LibraryImageSize saveWithImage:finalImage format:format path:resultSavePath];
 }
 
 + (BOOL)crop:(NSString* _Nonnull)uri
@@ -54,7 +51,7 @@
       height:(NSNumber*)height
       format:(NSString*)format
 resultSavePath:(NSString* _Nonnull) resultSavePath {
-    UIImage *image = [ImageSize uiImage:uri];
+    UIImage *image = [LibraryImageSize imageWithPath:uri];
     CGSize originalSize = image.size;
     
     CGFloat fX = [x floatValue] * originalSize.width;
@@ -73,6 +70,6 @@ resultSavePath:(NSString* _Nonnull) resultSavePath {
     CGRect targetRect = {-fX, -fY, image.size.width, image.size.height};
     CGAffineTransform transform = RCTTransformFromTargetRect(image.size, targetRect);
     UIImage *finalImage = RCTTransformImage(image, targetSize, image.scale, transform);
-    return [ImageSize save:finalImage format:format path:resultSavePath];
+    return [LibraryImageSize saveWithImage:finalImage format:format path:resultSavePath];
 }
 @end

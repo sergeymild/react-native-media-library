@@ -31,5 +31,5 @@ typedef void (^FetchAssetBlock)(json::object);
 
 -(NSString* _Nonnull)fetchAssetUrl:(PHAsset* _Nonnull)asset;
 
--(PHAsset* _Nonnull) fetchRawAsset:(NSString* _Nonnull)identifier;
+//-(PHAsset* _Nonnull) fetchRawAsset:(NSString* _Nonnull)identifier;
 @end

@@ -41,13 +41,13 @@ export default function App() {
   //   return <ImagesMerge />;
   // }
 
-  if (openCollection) {
-    return <ImagesList collection={openCollection} />;
-  }
+  // if (openCollection) {
+  //   return <ImagesList collection={openCollection} />;
+  // }
 
   // return <CropImageExample />;
 
-  return <CollectionsList setOpenCollection={setOpenCollection} />;
+  // return <CollectionsList setOpenCollection={setOpenCollection} />;
 
   return (
     <View style={styles.container}>
@@ -93,17 +93,18 @@ export default function App() {
           //   })
           // );
           // console.log('[App.imageSizes]');
-          // const isSuccess = await mediaLibrary.combineImages({
-          //   images: [
-          //     `${__mediaLibrary.docDir()}/1.png`,
-          //     `https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png`,
-          //     require('../assets/3.png'),
-          //   ],
-          //   resultSavePath: `${__mediaLibrary.docDir()}/tmp/re/result.png`,
-          // });
-          // console.log(
-          //   '[App.save]',
-          // );
+          const isSuccess = await mediaLibrary.combineImages({
+            images: [
+              `https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png`,
+              require('../assets/3.png'),
+            ],
+            resultSavePath: `${__mediaLibrary.cacheDir()}/tmp/re/result.png`,
+          });
+          console.log(
+            '[App.save]',
+            isSuccess,
+            `${__mediaLibrary.cacheDir()}/tmp/re/result.png`
+          );
           // const saveResponse = await mediaLibrary.saveToLibrary(
           //   // `/data/user/0/com.example.reactnativemedialibrary/files/2222.jpg`
           //   `${__mediaLibrary.docDir()}/ls.jpg`

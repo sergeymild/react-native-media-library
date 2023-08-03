@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "react_native_media_library-Swift.h"
 
 @interface CombineImages : NSObject
 

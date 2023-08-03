@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "react_native_media_library-Swift.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

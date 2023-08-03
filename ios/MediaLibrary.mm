@@ -14,7 +14,6 @@
 #import "FetchVideoFrame.h"
 #import "json.h"
 #import "CombineImages.h"
-#import "ImageSize.h"
 #import "ImageResize.h"
 #import "AssetsManager.h"
 #import "Helpers.h"
@@ -264,8 +263,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         dispatch_async(defQueue, ^{
             NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
             for (NSString* path in imagesPathArray) {
-                auto image = [ImageSize uiImage:path];
-                [imagesArray addObject:image];
+                auto image = [LibraryImageSize imageWithPath:path];
+                if (image) [imagesArray addObject:image];
             }
             auto result = [CombineImages combineImages:imagesArray resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
 
@@ -293,31 +292,16 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
             [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
         }
-
-        dispatch_async(defQueue, ^{
-            json::array jsonResultArray;
-            for (NSString* path in imagesPathArray) {
-                json::object object;
-                if ([path hasPrefix:@"ph://"]) {
-                    PHAsset* asset = [AssetsManager.sharedManager fetchRawAsset:path];
-
-                    object.insert("width", (double)asset.pixelWidth);
-                    object.insert("height", (double)asset.pixelHeight);
-                } else {
-                    auto image = [ImageSize uiImage:path];
-                    object.insert("width", (float)image.size.width);
-                    object.insert("height", (float)image.size.height);
-                }
-                jsonResultArray.push_back(object);
-            }
-            auto resultString = json::stringify(jsonResultArray);
-
+        
+        [LibraryImageSize getSizesWithPaths:imagesPathArray completion:^(NSString * _Nonnull result) {
+            std::string resultString = [Helpers toCString:result];
+            
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
             });
-        });
+        }];
 
 
         return jsi::Value::undefined();
