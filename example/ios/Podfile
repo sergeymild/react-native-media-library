@@ -21,15 +21,13 @@ target 'MediaLibraryExample' do
   use_react_native!(
     :path => config[:reactNativePath],
     # Hermes is now enabled by default. Disable by setting this flag to false.
-    # Upcoming versions of React Native may rely on get_default_flags(), but
-    # we make it explicit here to aid in the React Native upgrade process.
     :hermes_enabled => flags[:hermes_enabled],
     :fabric_enabled => flags[:fabric_enabled],
     # Enables Flipper.
     #
     # Note that if you have use_frameworks! enabled, Flipper will not work and
     # you should disable the next line.
-    :flipper_configuration => flipper_config,
+    :flipper_configuration => FlipperConfiguration.disabled,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
@@ -37,12 +35,20 @@ target 'MediaLibraryExample' do
   pod 'SDWebImagePhotosPlugin'
 
   post_install do |installer|
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
-      # Set `mac_catalyst_enabled` to `true` in order to apply patches
-      # necessary for Mac Catalyst builds
+      config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    installer.pods_project.targets.each do |target|
+            target.build_configurations.each do |config|
+              config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ""
+              config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
+              config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
+              config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+            end
+         end
   end
 end

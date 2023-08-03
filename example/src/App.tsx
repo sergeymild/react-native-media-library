@@ -41,11 +41,11 @@ export default function App() {
   //   return <ImagesMerge />;
   // }
 
-  // if (openCollection) {
-  //   return <ImagesList collection={openCollection} />;
-  // }
+  if (openCollection) {
+    return <ImagesList collection={openCollection} />;
+  }
 
-  return <CropImageExample />;
+  // return <CropImageExample />;
 
   return <CollectionsList setOpenCollection={setOpenCollection} />;
 

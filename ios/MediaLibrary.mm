@@ -19,6 +19,7 @@
 #import "ImageResize.h"
 #import "AssetsManager.h"
 #import "Helpers.h"
+#import "react_native_media_library-Swift.h"
 
 
 using namespace facebook;
@@ -153,12 +154,12 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = [Helpers toString:args[0].asString(runtime) runtime_:&runtime];
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-
-        dispatch_async(defQueue, ^{
+        
+        [MediaAssetManager fetchAssetWithIdentifier:_id completion:^(AssetData * _Nullable assetData) {
             json::object object;
-            [AssetsManager.sharedManager fetchAsset:_id object:&object];
+            [Helpers assetToJSON:assetData object:&object];
             std::string resultString = json::stringify(object);
-
+            
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 if (data.size() == 0) {
                     resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
@@ -168,7 +169,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
-        });
+        }];
         return jsi::Value::undefined();
     });
 

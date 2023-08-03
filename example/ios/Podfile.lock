@@ -530,7 +530,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 515b703d23ffadeac7687bc2d12fb08b90f0aaa1
   React-jsinspector: 9f7c9137605e72ca0343db4cea88006cb94856dd
   React-logger: 957e5dc96d9dbffc6e0f15e0ee4d2b42829ff207
-  react-native-media-library: 92fbade7270a4681e3ea9175fca1b594a78c01ec
+  react-native-media-library: 1c88ecb0462cb46581ce7ddbbe29781a900ec41d
   React-perflogger: af8a3d31546077f42d729b949925cc4549f14def
   React-RCTActionSheet: 57cc5adfefbaaf0aae2cf7e10bccd746f2903673
   React-RCTAnimation: 11c61e94da700c4dc915cf134513764d87fc5e2b
@@ -551,6 +551,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   Yoga: 5ed1699acbba8863755998a4245daa200ff3817b
 
-PODFILE CHECKSUM: 043f4abc3c14eeb1f3315ed3186eb9172dc0002e
+PODFILE CHECKSUM: 413517702181304da11d0649c48f4704d98074da
 
 COCOAPODS: 1.12.1

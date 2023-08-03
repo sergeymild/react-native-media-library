@@ -10,13 +10,20 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   const [images, setImages] = useState<AssetItem[]>([]);
 
   useEffect(() => {
-    mediaLibrary
-      .getAssets({
-        mediaType: ['video'],
-        collectionId: props.collection === '-1' ? undefined : props.collection,
-        limit: 1,
-      })
-      .then(setImages);
+    (async () => {
+      const media = await mediaLibrary
+        .getAssets({
+          mediaType: ['video'],
+          sortBy: 'creationTime',
+          sortOrder: 'desc',
+          //collectionId: props.collection === '-1' ? undefined : props.collection,
+          limit: 1,
+        })
+
+      setImages(media)
+
+      console.log('[ImagesList.]', await mediaLibrary.getAsset(media[0]!.id))
+    })()
 
     // mediaLibrary
     //   .imageSizes({

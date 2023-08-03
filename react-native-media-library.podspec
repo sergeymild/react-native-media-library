@@ -11,10 +11,11 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "14.0" }
+  s.platforms    = { :ios => "15.0" }
   s.source       = { :git => "https://github.com/sergeymild/react-native-media-library.git", :tag => "#{s.version}" }
 
-  s.source_files = "ios/**/*.{h,m,mm}"
+  s.source_files = "ios/**/*.{h,m,mm,swift}"
+  s.public_header_files = 'ios/MediaLibrary-Bridging-Header.h'
 
   s.pod_target_xcconfig    = {
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++17",

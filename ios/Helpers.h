@@ -10,6 +10,8 @@
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
 #import <React/RCTBridgeModule.h>
+#import "react_native_media_library-Swift.h"
+#import "json.h"
 
 
 using namespace facebook;
@@ -29,6 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 +(PHAssetMediaType) _assetTypeForUri:(NSString *)localUri;
 +(NSURL*) _normalizeAssetURLFromUri:(NSString *)uri;
 +(NSSortDescriptor*) _sortDescriptorFrom:(jsi::Runtime*)runtime_ sortBy:(jsi::Value)sortBy sortOrder:(jsi::Value)sortOrder;
++(void) assetToJSON: (AssetData* _Nonnull)asset
+             object:(json::object* _Nonnull)object;
 @end
 
 NS_ASSUME_NONNULL_END

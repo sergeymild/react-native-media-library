@@ -135,8 +135,6 @@
     PHAsset* asset = [self fetchRawAsset:identifier];
 
     [self pHAssetToJSON:asset object:object];
-    PHContentEditingInputRequestOptions *options = [PHContentEditingInputRequestOptions new];
-    [options setNetworkAccessAllowed:true];
     NSString* url = [self fetchAssetUrl: asset];
     object->insert("url", [Helpers toCString:url]);
 }
