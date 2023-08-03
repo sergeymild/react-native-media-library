@@ -11,7 +11,6 @@
 
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
-#import "SaveToCameraRoll.h"
 #import "FetchVideoFrame.h"
 #import "json.h"
 #import "CombineImages.h"
@@ -26,7 +25,7 @@ using namespace facebook;
 
 @interface MediaLibrary()
 {
-    SaveToCameraRoll *saveToCameraRoll;
+    
 }
 @end
 
@@ -52,8 +51,6 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     auto runtime_ = (jsi::Runtime*) _cxxBridge.runtime;
     if (runtime_ == nil) return @false;
     [self installJSIBindings:_bridge runtime:runtime_];
-
-    saveToCameraRoll = [[SaveToCameraRoll alloc] init];
 
 
     return @true;
@@ -182,36 +179,31 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             album = [Helpers toString:rawAlbum.asString(runtime) runtime_:&runtime];
         }
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        dispatch_async(defQueue, ^{
-            [self->saveToCameraRoll saveToCameraRoll:localUri
-                                         album:album
-                                      callback:^(NSString * _Nullable error, NSString * _Nullable _id) {
-
-                dispatch_async(defQueue, ^{
-
-                    std::string resultString = "";
-                    std::string errorString = "";
-                    if (error) {
-                        errorString = [Helpers toCString:error];
-                    } else {
-                        json::object object;
-                        [AssetsManager.sharedManager fetchAsset:_id object:&object];
-                        resultString = json::stringify(object);
-                    }
-
-                    _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
-                        if (err.size() > 0) {
-                            resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
-                            return;
-                        }
-                        auto str = reinterpret_cast<const uint8_t *>(data.c_str());
-                        auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
-                        resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
-                    });
-
-                });
-            }];
-        });
+        
+        [LibrarySaveToCameraRoll saveToCameraRollWithLocalUri:localUri
+                                                        album:album
+                                                     callback:^(NSString * _Nullable error, AssetData * _Nullable assetData) {
+            std::string resultString = "";
+            std::string errorString = "";
+            
+            if (error) {
+                errorString = [Helpers toCString:error];
+            } else {
+                json::object object;
+                [Helpers assetToJSON:assetData object:&object];
+                resultString = json::stringify(object);
+            }
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
+                if (err.size() > 0) {
+                    resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
+                    return;
+                }
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+            });
+        }];
 
         return jsi::Value::undefined();
     });

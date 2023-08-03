@@ -29,10 +29,7 @@ typedef void (^FetchAssetBlock)(json::object);
 -(void) pHAssetToJSON: (PHAsset* _Nonnull)asset
                object:(json::object* _Nonnull)object;
 
--(NSString* _Nonnull)fetchAssetUrl :(PHAsset* _Nonnull)asset;
-
--(void) fetchAsset:(NSString* _Nonnull)identifier
-                         object:(json::object* _Nonnull)object;
+-(NSString* _Nonnull)fetchAssetUrl:(PHAsset* _Nonnull)asset;
 
 -(PHAsset* _Nonnull) fetchRawAsset:(NSString* _Nonnull)identifier;
 @end

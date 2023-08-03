@@ -129,15 +129,7 @@
     }
 }
 
--(void) fetchAsset:(NSString* _Nonnull)identifier
-            object:(json::object* _Nonnull)object {
 
-    PHAsset* asset = [self fetchRawAsset:identifier];
-
-    [self pHAssetToJSON:asset object:object];
-    NSString* url = [self fetchAssetUrl: asset];
-    object->insert("url", [Helpers toCString:url]);
-}
 
 -(PHAsset* _Nonnull) fetchRawAsset:(NSString* _Nonnull)identifier {
     if ([identifier hasPrefix:@"ph://"]) {

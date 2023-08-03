@@ -13,7 +13,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
     (async () => {
       const media = await mediaLibrary
         .getAssets({
-          mediaType: ['video'],
+          mediaType: ['photo'],
           sortBy: 'creationTime',
           sortOrder: 'desc',
           //collectionId: props.collection === '-1' ? undefined : props.collection,
@@ -22,7 +22,12 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
 
       setImages(media)
 
-      console.log('[ImagesList.]', await mediaLibrary.getAsset(media[0]!.id))
+      const a = await mediaLibrary.getAsset(media[0]!.id)
+      const rs = await mediaLibrary.saveToLibrary({
+        album: 'newO',
+        localUrl: a!.url
+      })
+      console.log('[ImagesList.saveToCamera]', rs)
     })()
 
     // mediaLibrary
