@@ -12,7 +12,6 @@
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
 #import "FetchVideoFrame.h"
-#import "json.h"
 #import "Helpers.h"
 #import "react_native_media_library-Swift.h"
 
