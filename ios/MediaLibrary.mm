@@ -13,7 +13,6 @@
 #import <CoreServices/CoreServices.h>
 #import "FetchVideoFrame.h"
 #import "json.h"
-#import "AssetsManager.h"
 #import "Helpers.h"
 #import "react_native_media_library-Swift.h"
 
@@ -63,18 +62,15 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
     auto getCollections = JSI_HOST_FUNCTION("getCollections", 1) {
         auto resolve = std::make_shared<jsi::Value>(runtime, args[0]);
-
-        dispatch_async(defQueue, ^{
-            json::array results;
-            [AssetsManager.sharedManager fetchCollections:&results];
-
-            std::string resultString = json::stringify(results);
+        
+        [MediaAssetManager fetchCollectionsWithCompletion:^(NSString * _Nonnull json) {
+            std::string resultString = [Helpers toCString:json];
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
-        });
+        }];
 
         return jsi::Value::undefined();
     });
@@ -123,24 +119,20 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             auto type =rawMediaTypes.getValueAtIndex(runtime, i);
             [mediaType addObject:[Helpers toString:type.asString(runtime) runtime_:&runtime]];
         }
-
-        dispatch_async(defQueue, ^{
-            json::array results;
-            [AssetsManager.sharedManager fetchAssets:&results
-                                               limit:limit
-                                              offset:offset
-                                              sortBy:sortBy
-                                           sortOrder:sortOrder
-                                           mediaType:mediaType
-                                          collection:collectionId];
-
-            std::string resultString = json::stringify(results);
+        
+        [MediaAssetManager fetchAssetsWithLimit:limit
+                                         offset:offset
+                                         sortBy:sortBy
+                                      sortOrder:sortOrder
+                                      mediaType:mediaType
+                                   collectionId:collectionId completion:^(NSString * _Nonnull json) {
+            std::string resultString = [Helpers toCString:json];
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
-        });
+        }];
 
         return jsi::Value::undefined();
     });
@@ -149,11 +141,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         auto _id = [Helpers toString:args[0].asString(runtime) runtime_:&runtime];
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
         
-        [MediaAssetManager fetchAssetWithIdentifier:_id completion:^(AssetData * _Nullable assetData) {
-            json::object object;
-            [Helpers assetToJSON:assetData object:&object];
-            std::string resultString = json::stringify(object);
-            
+        [MediaAssetManager fetchAssetWithIdentifier:_id completion:^(NSString * _Nullable json) {
+            std::string resultString = [Helpers toCString:json];
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 if (data.size() == 0) {
                     resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::Value::undefined());
@@ -164,6 +153,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
         }];
+        
+        
         return jsi::Value::undefined();
     });
 
@@ -179,7 +170,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         
         [LibrarySaveToCameraRoll saveToCameraRollWithLocalUri:localUri
                                                         album:album
-                                                     callback:^(NSString * _Nullable error, AssetData * _Nullable assetData) {
+                                                     callback:^(NSString * _Nullable error, NSString * _Nullable json) {
             std::string resultString = "";
             std::string errorString = "";
             
@@ -187,9 +178,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 RCTLogError(@"MediaLibraryError %@", error);
                 errorString = [Helpers toCString:error];
             } else {
-                json::object object;
-                [Helpers assetToJSON:assetData object:&object];
-                resultString = json::stringify(object);
+                resultString = [Helpers toCString:json];
             }
             
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {

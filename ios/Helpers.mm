@@ -107,31 +107,6 @@ NSString *const AssetMediaTypeAll = @"all";
     return nil;
 }
 
-
-+(void) assetToJSON: (AssetData* _Nonnull)asset
-               object:(json::object* _Nonnull)object {
-
-    object->insert("filename", [Helpers toCString:asset.filename]);
-    object->insert("id", [Helpers toCString:asset.id]);
-    object->insert("creationTime", asset.creationTime);
-    object->insert("modificationTime", asset.modificationTime);
-    object->insert("mediaType", asset.mediaType);
-    object->insert("duration", asset.duration);
-    object->insert("width", asset.width);
-    object->insert("height", asset.height);
-    object->insert("uri", [Helpers toCString:asset.uri]);
-    if (asset.url) {
-        object->insert("url", [Helpers toCString:asset.url]);
-    }
-    object->insert("isSloMo", asset.isSloMo);
-    if (asset.location != NULL) {
-        json::object location;
-        location.insert("longitude", asset.location.longitude);
-        location.insert("latitude", asset.location.latitude);
-        object->insert("location", location);
-    }
-}
-
 @end
 
 

@@ -12,7 +12,6 @@
 		8D9D18AA2A792D3100B6F52B /* AssetsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D9D18A92A792D3100B6F52B /* AssetsManager.swift */; };
 		8DB839EB2A7E0F8E00E10431 /* LibraryImageResize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */; };
 		8DB839ED2A7E179E00E10431 /* LibraryCombineImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */; };
-		92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDB29B2159A00300C41 /* AssetsManager.mm */; };
 		92925EDE29B218F800300C41 /* Helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDD29B218F800300C41 /* Helpers.mm */; };
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
 		92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92F35F962938F9D80088B823 /* FetchVideoFrame.mm */; };
@@ -38,8 +37,6 @@
 		8D9D18A92A792D3100B6F52B /* AssetsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsManager.swift; sourceTree = "<group>"; };
 		8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImageResize.swift; sourceTree = "<group>"; };
 		8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCombineImages.swift; sourceTree = "<group>"; };
-		92925EDA29B2159A00300C41 /* AssetsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AssetsManager.h; sourceTree = "<group>"; };
-		92925EDB29B2159A00300C41 /* AssetsManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AssetsManager.mm; sourceTree = "<group>"; };
 		92925EDD29B218F800300C41 /* Helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Helpers.mm; sourceTree = "<group>"; };
 		929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaLibrary.mm; sourceTree = "<group>"; };
 		929FAD112928DB74000DF958 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
@@ -79,8 +76,6 @@
 				8D9D18A92A792D3100B6F52B /* AssetsManager.swift */,
 				92B7CDBC29B2304600D6F6D6 /* Helpers.h */,
 				92925EDD29B218F800300C41 /* Helpers.mm */,
-				92925EDA29B2159A00300C41 /* AssetsManager.h */,
-				92925EDB29B2159A00300C41 /* AssetsManager.mm */,
 				92F35F952938F9D80088B823 /* FetchVideoFrame.h */,
 				92F35F962938F9D80088B823 /* FetchVideoFrame.mm */,
 				B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */,
@@ -153,7 +148,6 @@
 				8D4B43432A7BF0A300B3E391 /* LibraryImageSize.swift in Sources */,
 				8DB839EB2A7E0F8E00E10431 /* LibraryImageResize.swift in Sources */,
 				8D9D18AA2A792D3100B6F52B /* AssetsManager.swift in Sources */,
-				92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */,
 				92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */,
 				8DB839ED2A7E179E00E10431 /* LibraryCombineImages.swift in Sources */,
 				929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */,

@@ -132,7 +132,7 @@ public class LibrarySaveToCameraRoll: NSObject {
     public static func saveToCameraRoll(
         localUri: NSString,
         album: String,
-        callback: @escaping (String?, AssetData?) -> Void
+        callback: @escaping (String?, String?) -> Void
     ) {
         Task {
             if Bundle.main.object(forInfoDictionaryKey: "NSPhotoLibraryAddUsageDescription") == nil {

@@ -9,12 +9,9 @@
 import Foundation
 import Photos
 
-@objc
-open class AssetLocation: NSObject {
-    @objc
-    public let longitude: Double
-    @objc
-    public let latitude: Double
+class AssetLocation: Encodable {
+    let longitude: Double
+    let latitude: Double
     
     internal init(longitude: Double, latitude: Double) {
         self.longitude = longitude
@@ -22,33 +19,25 @@ open class AssetLocation: NSObject {
     }
 }
 
-@objc
-open class AssetData: NSObject {
-    
-    @objc
-    public let filename: String
-    @objc
-    public let id: String
-    @objc
-    public let creationTime: Double
-    @objc
-    public let modificationTime: Double
-    @objc
-    public let duration: Double
-    @objc
-    public let width: Double
-    @objc
-    public let height: Double
-    @objc
-    public let mediaType: String
-    @objc
-    public let uri: String
-    @objc
-    public let url: String?
-    @objc
-    public let location: AssetLocation?
-    @objc
-    public let isSloMo: Bool
+private struct Collection: Encodable {
+    let id: String
+    let filename: String
+    let count: Int
+}
+
+class AssetData: Encodable {
+    let filename: String
+    let id: String
+    let creationTime: Double
+    let modificationTime: Double
+    let duration: Double
+    let width: Double
+    let height: Double
+    let mediaType: String
+    let uri: String
+    let url: String?
+    let location: AssetLocation?
+    let isSloMo: Bool
     
     internal init(
         filename: String,
@@ -156,8 +145,35 @@ open class MediaAssetManager: NSObject {
             options: options).firstObject
     }
     
+    private static func assetToData(asset: PHAsset) async -> AssetData {
+        let (absoluteUrl, isSloMo) = await Self.fetchAssetUrl(asset: asset)
+        
+        var location: AssetLocation?
+        if let loc = asset.location {
+            location = AssetLocation(
+                longitude: loc.coordinate.longitude,
+                latitude: loc.coordinate.latitude
+            )
+        }
+        
+        return AssetData(
+            filename: asset.value(key: "filename"),
+            id: asset.localIdentifier,
+            creationTime: asset.creationDate(),
+            modificationTime: asset.modificationDate(),
+            duration: asset.duration,
+            width: Double(asset.pixelWidth),
+            height: Double(asset.pixelHeight),
+            mediaType: asset.mediaType(),
+            uri: "ph://\(asset.localIdentifier)",
+            url: absoluteUrl,
+            location: location,
+            isSloMo: isSloMo
+        )
+    }
+    
     @objc
-    public static func fetchAsset(identifier: String, completion: @escaping (AssetData?) -> Void) {
+    public static func fetchAsset(identifier: String, completion: @escaping (String?) -> Void) {
         Task {
             let identifier = identifier.replacingOccurrences(of: "ph://", with: "")
             let options = PHFetchOptions()
@@ -167,31 +183,76 @@ open class MediaAssetManager: NSObject {
             let rawAsset = fetchRawAsset(identifier: identifier)
             
             guard let asset = rawAsset else { return completion(nil) }
-
-            let (absoluteUrl, isSloMo) = await Self.fetchAssetUrl(asset: asset)
             
-            var location: AssetLocation?
-            if let loc = asset.location {
-                location = AssetLocation(
-                    longitude: loc.coordinate.longitude,
-                    latitude: loc.coordinate.latitude
-                )
+            let data = try! JSONEncoder().encode(await assetToData(asset: asset))
+            
+            completion(String(data: data, encoding: .utf8))
+        }
+    }
+    
+    @objc
+    public static func fetchAssets(
+        limit: Int,
+        offset: Int,
+        sortBy: String?,
+        sortOrder: String?,
+        mediaType: [String],
+        collectionId: String?,
+        completion: @escaping (String) -> Void
+    ) {
+        Task {
+            var collection: PHAssetCollection?
+            if let cId = collectionId {
+                collection = PHAssetCollection.fetchAssetCollections(
+                    withLocalIdentifiers: [cId],
+                    options: nil
+                ).firstObject
             }
             
-            completion(AssetData(
-                filename: asset.value(key: "filename"),
-                id: asset.localIdentifier,
-                creationTime: asset.creationDate(),
-                modificationTime: asset.modificationDate(),
-                duration: asset.duration,
-                width: Double(asset.pixelWidth),
-                height: Double(asset.pixelHeight),
-                mediaType: asset.mediaType(),
-                uri: "ph://\(asset.localIdentifier)",
-                url: absoluteUrl,
-                location: location,
-                isSloMo: isSloMo
-            ))
+            let options = PHFetchOptions()
+            options.includeAllBurstAssets = false
+            options.includeHiddenAssets = false
+            
+            if !(mediaType.contains("photo") && mediaType.contains("video")) {
+                var type: PHAssetMediaType = .image
+                if mediaType.contains("video") { type = .video }
+                let predicate = NSPredicate(format: "mediaType = %d", type.rawValue)
+                options.predicate = predicate
+            }
+            
+            if limit > 0 && offset == -1 { options.fetchLimit = limit }
+            
+            if sortBy != nil && !sortBy!.isEmpty {
+                if sortBy! == "creationTime" || sortBy! == "modificationTime" {
+                    var ascending = sortOrder == "asc"
+                    let key = sortBy! == "creationTime" ? "creationDate" : "modificationDate"
+                    options.sortDescriptors = [.init(key: key, ascending: ascending)]
+                }
+            }
+            
+            let result = collection != nil
+            ? PHAsset.fetchAssets(in: collection!, options: options)
+            : PHAsset.fetchAssets(with: options)
+            
+            let totalCount = result.count
+            let startIndex = max(0, offset == -1 ? -1 : offset + 1)
+            let limit = limit == -1 ? 10 : limit
+            let endIndex = min(startIndex + limit, totalCount)
+            
+            if (startIndex == endIndex) { return completion("[]") }
+            
+            var assets: [AssetData] = []
+            
+            var i = startIndex
+            while i < endIndex {
+                let asset = result.object(at: i)
+                i += 1
+                
+                assets.append(await assetToData(asset: asset))
+            }
+            
+            let data = try! JSONEncoder().encode(assets)
+            completion(String(data: data, encoding: .utf8) ?? "[]")
         }
     }
 
@@ -211,5 +272,56 @@ open class MediaAssetManager: NSObject {
         }
         
         return (nil, false)
+    }
+    
+    
+    public static func fetchCollectionCount(_ collection: PHAssetCollection) async -> Int {
+        await withCheckedContinuation { cont in
+            let options = PHFetchOptions()
+            options.includeAllBurstAssets = false
+            options.includeHiddenAssets = false
+            options.fetchLimit = 0
+            cont.resume(returning: PHAsset.fetchAssets(in: collection, options: options).count)
+        }
+    }
+    
+    @objc
+    public static func fetchCollections(completion: @escaping(String) -> Void) {
+        
+        Task {
+            let smartAlbums = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .any, options: nil)
+            let albums = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: nil)
+            
+            var collections: [Collection] = []
+            var index = 0
+            var total = smartAlbums.count
+            
+            while total > 0 {
+                let asset = smartAlbums.object(at: index)
+                collections.append(.init(
+                    id: asset.localIdentifier,
+                    filename: asset.localizedTitle ?? "unknown",
+                    count: await fetchCollectionCount(asset)
+                ))
+                total -= 1
+                index += 1
+            }
+            
+            index = 0
+            total = albums.count
+
+            while total > 0 {
+                let asset = albums.object(at: index)
+                collections.append(.init(
+                    id: asset.localIdentifier,
+                    filename: asset.localizedTitle ?? "unknown",
+                    count: await fetchCollectionCount(asset)
+                ))
+                total -= 1
+                index += 1
+            }
+            
+            completion(String(data: try! JSONEncoder().encode(collections), encoding: .utf8)!)
+        }
     }
 }
