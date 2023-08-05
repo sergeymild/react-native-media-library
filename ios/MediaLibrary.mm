@@ -13,7 +13,6 @@
 #import <CoreServices/CoreServices.h>
 #import "FetchVideoFrame.h"
 #import "json.h"
-#import "ImageResize.h"
 #import "AssetsManager.h"
 #import "Helpers.h"
 #import "react_native_media_library-Swift.h"
@@ -371,13 +370,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
 
         dispatch_async(defQueue, ^{
-            NSString* error = [ImageResize crop:uri
-                                          x:[NSNumber numberWithDouble:rawX]
-                                          y:[NSNumber numberWithDouble:rawY]
-                                      width:[NSNumber numberWithDouble:rawWidth]
-                                     height:[NSNumber numberWithDouble:rawHeight]
-                                     format:format
-                             resultSavePath:resultSavePath];
+            NSString* error = [LibraryImageResize cropWithUri:uri
+                                                            x:[NSNumber numberWithDouble:rawX]
+                                                            y:[NSNumber numberWithDouble:rawY]
+                                                        width:[NSNumber numberWithDouble:rawWidth]
+                                                       height:[NSNumber numberWithDouble:rawHeight]
+                                                       format:format
+                                               resultSavePath:resultSavePath];
+            
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
             }

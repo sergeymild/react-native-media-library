@@ -15,7 +15,6 @@
 		92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDB29B2159A00300C41 /* AssetsManager.mm */; };
 		92925EDE29B218F800300C41 /* Helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDD29B218F800300C41 /* Helpers.mm */; };
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
-		92A6D40E2961C6A600934711 /* ImageResize.m in Sources */ = {isa = PBXBuildFile; fileRef = 92A6D40D2961C6A600934711 /* ImageResize.m */; };
 		92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92F35F962938F9D80088B823 /* FetchVideoFrame.mm */; };
 /* End PBXBuildFile section */
 
@@ -44,8 +43,6 @@
 		92925EDD29B218F800300C41 /* Helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Helpers.mm; sourceTree = "<group>"; };
 		929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaLibrary.mm; sourceTree = "<group>"; };
 		929FAD112928DB74000DF958 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
-		92A6D40C2961C6A600934711 /* ImageResize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageResize.h; sourceTree = "<group>"; };
-		92A6D40D2961C6A600934711 /* ImageResize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImageResize.m; sourceTree = "<group>"; };
 		92B7CDBC29B2304600D6F6D6 /* Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Helpers.h; sourceTree = "<group>"; };
 		92C03C74292A051A0068151A /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 		92F35F952938F9D80088B823 /* FetchVideoFrame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FetchVideoFrame.h; sourceTree = "<group>"; };
@@ -88,8 +85,6 @@
 				92F35F962938F9D80088B823 /* FetchVideoFrame.mm */,
 				B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */,
 				929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */,
-				92A6D40C2961C6A600934711 /* ImageResize.h */,
-				92A6D40D2961C6A600934711 /* ImageResize.m */,
 				92C03C74292A051A0068151A /* json.h */,
 				929FAD112928DB74000DF958 /* Macros.h */,
 				134814211AA4EA7D00B7C361 /* Products */,
@@ -156,7 +151,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D4B43432A7BF0A300B3E391 /* LibraryImageSize.swift in Sources */,
-				92A6D40E2961C6A600934711 /* ImageResize.m in Sources */,
 				8DB839EB2A7E0F8E00E10431 /* LibraryImageResize.swift in Sources */,
 				8D9D18AA2A792D3100B6F52B /* AssetsManager.swift in Sources */,
 				92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */,
