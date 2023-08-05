@@ -10,7 +10,8 @@
 		8D4B43402A7B82C800B3E391 /* LibrarySaveToCameraRoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D4B433F2A7B82C800B3E391 /* LibrarySaveToCameraRoll.swift */; };
 		8D4B43432A7BF0A300B3E391 /* LibraryImageSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D4B43422A7BF0A300B3E391 /* LibraryImageSize.swift */; };
 		8D9D18AA2A792D3100B6F52B /* AssetsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D9D18A92A792D3100B6F52B /* AssetsManager.swift */; };
-		928DBA1C2947AF15006E1CD9 /* CombineImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 928DBA1B2947AF15006E1CD9 /* CombineImages.m */; };
+		8DB839EB2A7E0F8E00E10431 /* LibraryImageResize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */; };
+		8DB839ED2A7E179E00E10431 /* LibraryCombineImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */; };
 		92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDB29B2159A00300C41 /* AssetsManager.mm */; };
 		92925EDE29B218F800300C41 /* Helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 92925EDD29B218F800300C41 /* Helpers.mm */; };
 		929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */; };
@@ -36,8 +37,8 @@
 		8D4B43422A7BF0A300B3E391 /* LibraryImageSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImageSize.swift; sourceTree = "<group>"; };
 		8D9D18A82A792D3100B6F52B /* MediaLibrary-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MediaLibrary-Bridging-Header.h"; sourceTree = "<group>"; };
 		8D9D18A92A792D3100B6F52B /* AssetsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsManager.swift; sourceTree = "<group>"; };
-		928DBA1A2947AF15006E1CD9 /* CombineImages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CombineImages.h; sourceTree = "<group>"; };
-		928DBA1B2947AF15006E1CD9 /* CombineImages.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CombineImages.m; sourceTree = "<group>"; };
+		8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImageResize.swift; sourceTree = "<group>"; };
+		8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCombineImages.swift; sourceTree = "<group>"; };
 		92925EDA29B2159A00300C41 /* AssetsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AssetsManager.h; sourceTree = "<group>"; };
 		92925EDB29B2159A00300C41 /* AssetsManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AssetsManager.mm; sourceTree = "<group>"; };
 		92925EDD29B218F800300C41 /* Helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Helpers.mm; sourceTree = "<group>"; };
@@ -74,6 +75,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */,
+				8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */,
 				8D4B43422A7BF0A300B3E391 /* LibraryImageSize.swift */,
 				8D4B433F2A7B82C800B3E391 /* LibrarySaveToCameraRoll.swift */,
 				8D9D18A92A792D3100B6F52B /* AssetsManager.swift */,
@@ -85,8 +88,6 @@
 				92F35F962938F9D80088B823 /* FetchVideoFrame.mm */,
 				B3E7B5881CC2AC0600A0062D /* MediaLibrary.h */,
 				929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */,
-				928DBA1A2947AF15006E1CD9 /* CombineImages.h */,
-				928DBA1B2947AF15006E1CD9 /* CombineImages.m */,
 				92A6D40C2961C6A600934711 /* ImageResize.h */,
 				92A6D40D2961C6A600934711 /* ImageResize.m */,
 				92C03C74292A051A0068151A /* json.h */,
@@ -155,11 +156,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D4B43432A7BF0A300B3E391 /* LibraryImageSize.swift in Sources */,
-				928DBA1C2947AF15006E1CD9 /* CombineImages.m in Sources */,
 				92A6D40E2961C6A600934711 /* ImageResize.m in Sources */,
+				8DB839EB2A7E0F8E00E10431 /* LibraryImageResize.swift in Sources */,
 				8D9D18AA2A792D3100B6F52B /* AssetsManager.swift in Sources */,
 				92925EDC29B2159A00300C41 /* AssetsManager.mm in Sources */,
 				92F35F972938F9D80088B823 /* FetchVideoFrame.mm in Sources */,
+				8DB839ED2A7E179E00E10431 /* LibraryCombineImages.swift in Sources */,
 				929FAD0E2928D9DD000DF958 /* MediaLibrary.mm in Sources */,
 				8D4B43402A7B82C800B3E391 /* LibrarySaveToCameraRoll.swift in Sources */,
 				92925EDE29B218F800300C41 /* Helpers.mm in Sources */,

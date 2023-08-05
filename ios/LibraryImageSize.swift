@@ -90,7 +90,7 @@ public class LibraryImageSize: NSObject {
     }
     
     @objc
-    public static func save(image: UIImage, format: NSString, path: NSString) -> Bool {
+    public static func save(image: UIImage, format: NSString, path: NSString) -> String? {
         let folderPath = path.deletingLastPathComponent
         do {
             try FileManager.default.createDirectory(atPath: folderPath, withIntermediateDirectories: true)
@@ -99,16 +99,15 @@ public class LibraryImageSize: NSObject {
             }
             let finalPath = toFilePath(path: path)
             if format == "png" {
-                guard let data = image.pngData() else { return false }
+                guard let data = image.pngData() else { return "LibraryImageSize.failConvertToPNG" }
                 try data.write(to: finalPath, options: .atomic)
-                return true
+                return nil
             }
-            guard let data = image.jpegData(compressionQuality: 1.0) else { return false }
+            guard let data = image.jpegData(compressionQuality: 1.0) else { return "LibraryImageSize.failConvertToJPG" }
             try data.write(to: finalPath, options: .atomic)
-            return true
+            return nil
         } catch {
-            debugPrint("save(image.Error", error)
+            return "LibraryImageSize.catch.error: \(error.localizedDescription)"
         }
-        return false
     }
 }

@@ -12,13 +12,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ImageResize : NSObject
-+ (BOOL)resize:(NSString* _Nonnull)uri
-         width:(NSNumber*)width
-        height:(NSNumber*)height
-        format:(NSString*)format
-resultSavePath:(NSString* _Nonnull) resultSavePath;
 
-+ (BOOL)crop:(NSString* _Nonnull)uri
++ (NSString*)crop:(NSString* _Nonnull)uri
            x:(NSNumber*)x
            y:(NSNumber*)y
        width:(NSNumber*)width

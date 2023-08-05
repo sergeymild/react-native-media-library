@@ -13,7 +13,6 @@
 #import <CoreServices/CoreServices.h>
 #import "FetchVideoFrame.h"
 #import "json.h"
-#import "CombineImages.h"
 #import "ImageResize.h"
 #import "AssetsManager.h"
 #import "Helpers.h"
@@ -186,6 +185,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             std::string errorString = "";
             
             if (error) {
+                RCTLogError(@"MediaLibraryError %@", error);
                 errorString = [Helpers toCString:error];
             } else {
                 json::object object;
@@ -266,7 +266,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 auto image = [LibraryImageSize imageWithPath:path];
                 if (image) [imagesArray addObject:image];
             }
-            auto result = [CombineImages combineImages:imagesArray resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+            NSString* error = [LibraryCombineImages combineImagesWithImages:imagesArray
+                                                             resultSavePath:resultSavePath];
+            
+            if (error) {
+                RCTLogError(@"MediaLibraryError %@", error);
+            }
+            
+            auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -324,11 +331,17 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSNumber *height = [NSNumber numberWithDouble:rawHeight];
 
         dispatch_async(defQueue, ^{
-            auto result = [ImageResize resize:uri
-                                        width:width
-                                       height:height
-                                       format:format
-                               resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+            NSString* error = [LibraryImageResize resizeWithUri:uri
+                                                          width:width
+                                                         height:height
+                                                         format:format
+                                                 resultSavePath:resultSavePath];
+            
+            if (error) {
+                RCTLogError(@"MediaLibraryError %@", error);
+            }
+            
+            auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -358,13 +371,18 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
 
         dispatch_async(defQueue, ^{
-            auto result = [ImageResize crop:uri
+            NSString* error = [ImageResize crop:uri
                                           x:[NSNumber numberWithDouble:rawX]
                                           y:[NSNumber numberWithDouble:rawY]
                                       width:[NSNumber numberWithDouble:rawWidth]
                                      height:[NSNumber numberWithDouble:rawHeight]
                                      format:format
-                             resultSavePath:resultSavePath] ? RESULT_TRUE : RESULT_FALSE;
+                             resultSavePath:resultSavePath];
+            if (error) {
+                RCTLogError(@"MediaLibraryError %@", error);
+            }
+            
+            auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
