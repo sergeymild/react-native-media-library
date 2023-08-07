@@ -146,7 +146,7 @@ open class MediaAssetManager: NSObject {
     }
     
     private static func assetToData(asset: PHAsset) async -> AssetData {
-        let (absoluteUrl, isSloMo) = await Self.fetchAssetUrl(asset: asset)
+        let (absoluteUrl, isSloMo) = await fetchAssetUrl(asset: asset)
         
         var location: AssetLocation?
         if let loc = asset.location {
@@ -224,7 +224,7 @@ open class MediaAssetManager: NSObject {
             
             if sortBy != nil && !sortBy!.isEmpty {
                 if sortBy! == "creationTime" || sortBy! == "modificationTime" {
-                    var ascending = sortOrder == "asc"
+                    let ascending = sortOrder == "asc"
                     let key = sortBy! == "creationTime" ? "creationDate" : "modificationDate"
                     options.sortDescriptors = [.init(key: key, ascending: ascending)]
                 }
@@ -241,18 +241,33 @@ open class MediaAssetManager: NSObject {
             
             if (startIndex == endIndex) { return completion("[]") }
             
-            var assets: [AssetData] = []
             
+            
+            var assets: [AssetData] = []
+            var rawAssets: [PHAsset] = []
             var i = startIndex
             while i < endIndex {
                 let asset = result.object(at: i)
                 i += 1
-                
-                assets.append(await assetToData(asset: asset))
+                rawAssets.append(asset)
             }
+            
+            assets = await awaitAllAssets(assets: rawAssets)
             
             let data = try! JSONEncoder().encode(assets)
             completion(String(data: data, encoding: .utf8) ?? "[]")
+        }
+    }
+    
+    private static func awaitAllAssets(assets: [PHAsset]) async -> [AssetData] {
+        await withTaskGroup(of: AssetData.self) { group in
+            for asset in assets {
+                group.addTask { await assetToData(asset: asset) }
+            }
+            
+            return await group.reduce(into: [], { result, element in
+                result.append(element)
+            })
         }
     }
 

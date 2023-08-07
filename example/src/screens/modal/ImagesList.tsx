@@ -22,6 +22,9 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   const [images, setImages] = useState<AssetItem[]>([]);
   const options = useRef<FetchAssetsOptions>({
     collectionId: params?.collectionId,
+    limit: 40,
+    sortBy: 'creationTime',
+    sortOrder: 'desc',
   });
 
   useEffect(() => {
@@ -89,29 +92,35 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
           mediaLibrary
             .getAssets({
               ...options.current,
-              limit: 10,
+              limit: 40,
               offset: images.length - 1,
             })
             .then((r) => setImages([...images, ...r]));
         }}
         renderItem={(info) => {
-          console.log('[ImagesList.]', info.item.width, info.item.height);
           return (
-            <FastImage
-              resizeSize={{ width: width / 3, height: width / 3 }}
-              width={width / 3}
-              height={width / 3}
-              source={{
-                uri: info.item.uri,
-                //@ts-ignore
-                resizeSize: { width: width / 3, height: width / 3 },
+            <TouchableOpacity
+              onPress={async () => {
+                const d = await mediaLibrary.getAsset(info.item.id);
+                console.log('[ImagesList.]', JSON.stringify(d, undefined, 2));
               }}
-              style={{
-                width: width / 3,
-                height: width / 3,
-                backgroundColor: 'yellow',
-              }}
-            />
+            >
+              <FastImage
+                resizeSize={{ width: width / 3, height: width / 3 }}
+                width={width / 3}
+                height={width / 3}
+                source={{
+                  uri: info.item.uri,
+                  //@ts-ignore
+                  resizeSize: { width: width / 3, height: width / 3 },
+                }}
+                style={{
+                  width: width / 3,
+                  height: width / 3,
+                  backgroundColor: 'yellow',
+                }}
+              />
+            </TouchableOpacity>
           );
         }}
       />
