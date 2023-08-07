@@ -108,8 +108,8 @@ export type MediaType = 'photo' | 'video' | 'audio' | 'unknown';
 export interface AssetItem {
   readonly filename: string;
   readonly id: string;
-  readonly creationTime: number;
-  readonly modificationTime: number;
+  readonly creationTime?: number;
+  readonly modificationTime?: number;
   readonly mediaType: MediaType;
   readonly duration: number;
   readonly width: number;

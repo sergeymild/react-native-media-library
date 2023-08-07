@@ -28,8 +28,8 @@ private struct Collection: Encodable {
 class AssetData: Encodable {
     let filename: String
     let id: String
-    let creationTime: Double
-    let modificationTime: Double
+    let creationTime: Double?
+    let modificationTime: Double?
     let duration: Double
     let width: Double
     let height: Double
@@ -42,8 +42,8 @@ class AssetData: Encodable {
     internal init(
         filename: String,
         id: String,
-        creationTime: Double,
-        modificationTime: Double,
+        creationTime: Double?,
+        modificationTime: Double?,
         duration: Double,
         width: Double,
         height: Double,
@@ -87,14 +87,16 @@ extension PHAsset {
         return value(forKey: key) as! String
     }
     
-    func creationDate() -> Double {
-        let interval = creationDate!.timeIntervalSince1970
+    func creationDate() -> Double? {
+        guard let date = creationDate else { return nil }
+        let interval = date.timeIntervalSince1970
         let intervalMs = interval * 1000.0
         return intervalMs
     }
     
-    func modificationDate() -> Double {
-        let interval = modificationDate!.timeIntervalSince1970
+    func modificationDate() -> Double? {
+        guard let date = modificationDate else { return nil }
+        let interval = date.timeIntervalSince1970
         let intervalMs = interval * 1000.0
         return intervalMs
     }
