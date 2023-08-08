@@ -22,13 +22,18 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   const [images, setImages] = useState<AssetItem[]>([]);
   const options = useRef<FetchAssetsOptions>({
     collectionId: params?.collectionId,
-    limit: 40,
+    limit: 200,
     sortBy: 'creationTime',
     sortOrder: 'desc',
   });
 
   useEffect(() => {
-    mediaLibrary.getAssets(options.current).then(setImages);
+    const strat = Date.now();
+    console.log('[ImagesList.]', options.current);
+    mediaLibrary.getAssets(options.current).then((r) => {
+      console.log('[ImagesList.]', (Date.now() - strat) / 1000, r.length);
+      setImages(r);
+    });
   }, []);
 
   const mediaType = options.current!.mediaType ?? [];
@@ -92,7 +97,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
           mediaLibrary
             .getAssets({
               ...options.current,
-              limit: 40,
+              limit: 50,
               offset: images.length - 1,
             })
             .then((r) => setImages([...images, ...r]));
