@@ -275,7 +275,7 @@ PODS:
   - React-jsinspector (0.71.3)
   - React-logger (0.71.3):
     - glog
-  - react-native-media-library (0.71.11):
+  - react-native-media-library (2.0.1):
     - React-callinvoker
     - React-Core
     - ReactCommon/turbomodule/core
@@ -550,7 +550,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 515b703d23ffadeac7687bc2d12fb08b90f0aaa1
   React-jsinspector: 9f7c9137605e72ca0343db4cea88006cb94856dd
   React-logger: 957e5dc96d9dbffc6e0f15e0ee4d2b42829ff207
-  react-native-media-library: 1c88ecb0462cb46581ce7ddbbe29781a900ec41d
+  react-native-media-library: e5a8764abcda5c5ea875abae3169be5c00d3c5bb
   react-native-safe-area-context: 39c2d8be3328df5d437ac1700f4f3a4f75716acc
   React-perflogger: af8a3d31546077f42d729b949925cc4549f14def
   React-RCTActionSheet: 57cc5adfefbaaf0aae2cf7e10bccd746f2903673

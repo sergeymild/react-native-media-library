@@ -147,9 +147,7 @@ open class MediaAssetManager: NSObject {
             options: options).firstObject
     }
     
-    private static func assetToData(asset: PHAsset) async -> AssetData {
-        let (absoluteUrl, isSloMo) = await fetchAssetUrl(asset: asset)
-        
+    private static func assetToData(asset: PHAsset, isSloMo: Bool, url: String?) -> AssetData {
         var location: AssetLocation?
         if let loc = asset.location {
             location = AssetLocation(
@@ -157,7 +155,6 @@ open class MediaAssetManager: NSObject {
                 latitude: loc.coordinate.latitude
             )
         }
-        
         return AssetData(
             filename: asset.value(key: "filename"),
             id: asset.localIdentifier,
@@ -168,10 +165,15 @@ open class MediaAssetManager: NSObject {
             height: Double(asset.pixelHeight),
             mediaType: asset.mediaType(),
             uri: "ph://\(asset.localIdentifier)",
-            url: absoluteUrl,
+            url: url,
             location: location,
             isSloMo: isSloMo
         )
+    }
+    
+    private static func assetToData(asset: PHAsset) async -> AssetData {
+        let (absoluteUrl, isSloMo) = await fetchAssetUrl(asset: asset)
+        return assetToData(asset: asset, isSloMo: isSloMo, url: absoluteUrl)
     }
     
     @objc
@@ -246,30 +248,15 @@ open class MediaAssetManager: NSObject {
             
             
             var assets: [AssetData] = []
-            var rawAssets: [PHAsset] = []
             var i = startIndex
             while i < endIndex {
                 let asset = result.object(at: i)
+                assets.append(assetToData(asset: asset, isSloMo: false, url: nil))
                 i += 1
-                rawAssets.append(asset)
             }
-            
-            assets = await awaitAllAssets(assets: rawAssets)
             
             let data = try! JSONEncoder().encode(assets)
             completion(String(data: data, encoding: .utf8) ?? "[]")
-        }
-    }
-    
-    private static func awaitAllAssets(assets: [PHAsset]) async -> [AssetData] {
-        await withTaskGroup(of: AssetData.self) { group in
-            for asset in assets {
-                group.addTask { await assetToData(asset: asset) }
-            }
-            
-            return await group.reduce(into: [], { result, element in
-                result.append(element)
-            })
         }
     }
 
