@@ -37,7 +37,7 @@ class AssetData: Encodable {
     let uri: String
     let url: String?
     let location: AssetLocation?
-    let isSloMo: Bool
+    let subtypes: [String]
     
     internal init(
         filename: String,
@@ -51,7 +51,7 @@ class AssetData: Encodable {
         uri: String,
         url: String?,
         location: AssetLocation?,
-        isSloMo: Bool
+        subtypes: [String]
     ) {
         self.filename = filename
         self.id = id
@@ -64,7 +64,7 @@ class AssetData: Encodable {
         self.url = url
         self.uri = uri
         self.location = location
-        self.isSloMo = isSloMo
+        self.subtypes = subtypes
     }
 }
 
@@ -110,6 +110,40 @@ extension PHAsset {
         @unknown default:
             return "unknown"
         }
+    }
+    
+    func mediaSubtypeTypes() -> [String] {
+        var subtypes: [String] = []
+        if mediaSubtypes.contains(.photoPanorama) {
+            subtypes.append("photoPanorama")
+        }
+        if mediaSubtypes.contains(.photoHDR) {
+            subtypes.append("photoHDR")
+        }
+        if mediaSubtypes.contains(.photoScreenshot) {
+            subtypes.append("photoScreenshot")
+        }
+        if mediaSubtypes.contains(.photoLive) {
+            subtypes.append("photoLive")
+        }
+        if mediaSubtypes.contains(.photoDepthEffect) {
+            subtypes.append("photoDepthEffect")
+        }
+        if mediaSubtypes.contains(.videoStreamed) {
+            subtypes.append("videoStreamed")
+        }
+        if mediaSubtypes.contains(.videoHighFrameRate) {
+            subtypes.append("videoHighFrameRate")
+        }
+        if mediaSubtypes.contains(.videoTimelapse) {
+            subtypes.append("videoTimelapse")
+        }
+        if #available(iOS 15, *) {
+            if mediaSubtypes.contains(.videoCinematic) {
+                subtypes.append("videoCinematic")
+            }
+        }
+        return subtypes
     }
 }
 
@@ -167,7 +201,7 @@ open class MediaAssetManager: NSObject {
             uri: "ph://\(asset.localIdentifier)",
             url: url,
             location: location,
-            isSloMo: isSloMo
+            subtypes: asset.mediaSubtypeTypes()
         )
     }
     

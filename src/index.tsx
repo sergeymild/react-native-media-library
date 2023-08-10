@@ -105,6 +105,17 @@ interface SaveToLibrary {
 }
 
 export type MediaType = 'photo' | 'video' | 'audio' | 'unknown';
+export type MediaSubType =
+  | 'photoPanorama'
+  | 'photoHDR'
+  | 'photoScreenshot'
+  | 'photoLive'
+  | 'photoDepthEffect'
+  | 'videoStreamed'
+  | 'videoHighFrameRate'
+  | 'videoTimelapse'
+  | 'videoCinematic'
+  | 'unknown';
 export interface AssetItem {
   readonly filename: string;
   readonly id: string;
@@ -115,6 +126,8 @@ export interface AssetItem {
   readonly width: number;
   readonly height: number;
   readonly uri: string;
+  // only on IOS
+  readonly subtypes?: MediaSubType[];
 }
 
 export interface CollectionItem {

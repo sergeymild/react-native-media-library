@@ -103,6 +103,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
             .then((r) => setImages([...images, ...r]));
         }}
         renderItem={(info) => {
+          console.log('[ImagesList.]', info.item.subtypes);
           return (
             <TouchableOpacity
               onPress={async () => {

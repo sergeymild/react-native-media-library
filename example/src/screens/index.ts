@@ -12,6 +12,11 @@ export const screens = [
         slug: 'ImagesList',
         getScreen: () => require('./modal/ImagesList').ImagesList,
       },
+      {
+        name: 'SloMo',
+        slug: 'SloMo',
+        getScreen: () => require('./modal/SloMo').SloMo,
+      },
     ],
   },
 ];
