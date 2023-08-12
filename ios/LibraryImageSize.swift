@@ -14,11 +14,19 @@ private struct Size: Codable {
     let height: Double
 }
 
-private func toFilePath(path: NSString) -> URL {
+public func toFilePath(path: NSString) -> URL {
     if path.hasPrefix("file://") {
         return URL(string: path as String)!
     }
     return URL(string: "file://\(path)")!
+}
+
+public func ensurePath(path: NSString) {
+    let folderPath = path.deletingLastPathComponent
+    try? FileManager.default.createDirectory(atPath: folderPath, withIntermediateDirectories: true)
+    if FileManager.default.fileExists(atPath: path as String) {
+        try? FileManager.default.removeItem(atPath: path as String)
+    }
 }
 
 @objc
@@ -91,12 +99,8 @@ public class LibraryImageSize: NSObject {
     
     @objc
     public static func save(image: UIImage, format: NSString, path: NSString) -> String? {
-        let folderPath = path.deletingLastPathComponent
+        ensurePath(path: path)
         do {
-            try FileManager.default.createDirectory(atPath: folderPath, withIntermediateDirectories: true)
-            if FileManager.default.fileExists(atPath: path as String) {
-                try FileManager.default.removeItem(atPath: path as String)
-            }
             let finalPath = toFilePath(path: path)
             if format == "png" {
                 guard let data = image.pngData() else { return "LibraryImageSize.failConvertToPNG" }

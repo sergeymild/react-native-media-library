@@ -1,14 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
 import Video from 'react-native-video';
 
-export const convertLocalIdentifierToAssetLibrary = (localIdentifier, ext) => {
-  const hash = localIdentifier.split('/')[0];
-  return `assets-library://asset/asset.${ext}?id=${hash}&ext=${ext}`;
-};
-
-export const SloMo: React.FC = () => {
+export const ExportVideo: React.FC = () => {
   const [asset, setAsset] = useState<any>();
 
   useEffect(() => {
@@ -21,14 +16,18 @@ export const SloMo: React.FC = () => {
       })
       .then(async (r) => {
         //setAsset(r[0]);
-        mediaLibrary.getAsset(r[0].id).then((rr) => {
-          console.log('[SloMo.2]', rr?.url);
-          setAsset(rr);
-        });
+        const resultSavePath = `${mediaLibrary.cacheDir}/file.mp4`;
+        console.log('[ExportVideo.tryExport]', r[0].id, resultSavePath);
+        mediaLibrary
+          .exportVideo({ identifier: r[0].id, resultSavePath })
+          .then((isSuccess) => {
+            console.log('[ExportVideo.video]', isSuccess);
+            setAsset(resultSavePath);
+          });
       });
   }, []);
 
-  console.log('[SloMo.SloMo!!]', asset?.url);
+  console.log('[SloMo.SloMo!!]', asset);
   return (
     <View style={{ flex: 1 }}>
       {!!asset && (
@@ -43,7 +42,7 @@ export const SloMo: React.FC = () => {
             //   asset.uri.replace('ph://', ''),
             //   'mov'
             // ),
-            uri: asset.url,
+            uri: asset,
           }}
         />
       )}

@@ -17,6 +17,11 @@ export const screens = [
         slug: 'SloMo',
         getScreen: () => require('./modal/SloMo').SloMo,
       },
+      {
+        name: 'ExportVideo',
+        slug: 'ExportVideo',
+        getScreen: () => require('./modal/ExportVideo').ExportVideo,
+      },
     ],
   },
 ];

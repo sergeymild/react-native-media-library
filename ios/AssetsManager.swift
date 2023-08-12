@@ -35,7 +35,7 @@ class AssetData: Encodable {
     let height: Double
     let mediaType: String
     let uri: String
-    let url: String?
+    var url: String?
     let location: AssetLocation?
     let subtypes: [String]
     
@@ -69,13 +69,13 @@ class AssetData: Encodable {
 }
 
 extension PHAsset {
-    func asyncRequestUrl() async -> String? {
+    func asyncRequestUrl() async -> URL? {
         await withCheckedContinuation { continuation in
             let options = PHContentEditingInputRequestOptions()
             options.isNetworkAccessAllowed = true
             
             requestContentEditingInput(with: options) { input, info in
-                guard let url = input?.fullSizeImageURL?.absoluteString else {
+                guard let url = input?.fullSizeImageURL else {
                     return continuation.resume(returning: nil)
                 }
                 continuation.resume(returning: url)
@@ -148,6 +148,20 @@ extension PHAsset {
 }
 
 extension PHImageManager {
+    func exportSession(asset: PHAsset) async -> (AVAssetExportSession?) {
+        await withCheckedContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.isNetworkAccessAllowed = true
+            requestExportSession(
+                forVideo: asset,
+                options: options,
+                exportPreset: AVAssetExportPresetMediumQuality
+            ) { session, _ in
+                continuation.resume(returning: session)
+            }
+        }
+    }
+
     func asyncRequestAVAsset(forVideo asset: PHAsset, fetchOriginal: Bool) async -> (AVAsset?, Bool) {
         let result = await withCheckedContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -206,8 +220,8 @@ open class MediaAssetManager: NSObject {
     }
     
     private static func assetToData(asset: PHAsset) async -> AssetData {
-        let (absoluteUrl, isSloMo) = await fetchAssetUrl(asset: asset)
-        return assetToData(asset: asset, isSloMo: isSloMo, url: absoluteUrl)
+        let (url, isSloMo) = await fetchAssetUrl(asset: asset)
+        return assetToData(asset: asset, isSloMo: isSloMo, url: url?.absoluteString)
     }
     
     @objc
@@ -294,7 +308,7 @@ open class MediaAssetManager: NSObject {
         }
     }
 
-    public static func fetchAssetUrl(asset: PHAsset) async -> (String?, Bool) {
+    public static func fetchAssetUrl(asset: PHAsset) async -> (URL?, Bool) {
         if asset.mediaType == .image {
             guard let url = await asset.asyncRequestUrl() else { return (nil, false) }
             return (url, false)
@@ -304,7 +318,7 @@ open class MediaAssetManager: NSObject {
             let (videoAsset, isSloMo) = await PHImageManager.default()
                 .asyncRequestAVAsset(forVideo: asset, fetchOriginal: false)
             if let video = videoAsset as? AVURLAsset {
-                return (video.url.absoluteString, isSloMo)
+                return (video.url, isSloMo)
             }
             return (nil, isSloMo)
         }
@@ -360,6 +374,54 @@ open class MediaAssetManager: NSObject {
             }
             
             completion(String(data: try! JSONEncoder().encode(collections), encoding: .utf8)!)
+        }
+    }
+    
+    @objc
+    public static func exportVideo(
+        identifier: String,
+        resultSavePath: NSString,
+        completion: @escaping (Bool) -> Void
+    ) {
+        Task {
+            let identifier = identifier.replacingOccurrences(of: "ph://", with: "")
+            let options = PHFetchOptions()
+            options.includeHiddenAssets = true;
+            options.includeAllBurstAssets = true;
+            options.fetchLimit = 1;
+            let rawAsset = fetchRawAsset(identifier: identifier)
+            
+            guard let asset = rawAsset else { return completion(false) }
+            
+            guard let exportSession = await PHImageManager.default().exportSession(asset: asset) else {
+                return completion(false)
+            }
+            
+            ensurePath(path: resultSavePath)
+            
+            exportSession.outputURL = toFilePath(path: resultSavePath)
+            exportSession.outputFileType = AVFileType.mp4
+            exportSession.shouldOptimizeForNetworkUse = true
+            
+            
+            await exportSession.export()
+            switch exportSession.status {
+            case .failed:
+                print(exportSession.error ?? "NO ERROR")
+                completion(false)
+            case .cancelled:
+                completion(false)
+            case .completed:
+                completion(true)
+            case .unknown:
+                completion(false)
+            case .waiting:
+                completion(false)
+            case .exporting:
+                completion(false)
+            @unknown default:
+                completion(false)
+            }
         }
     }
 }

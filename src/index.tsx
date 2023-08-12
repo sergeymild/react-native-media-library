@@ -30,6 +30,13 @@ declare global {
       id: string,
       callback: (item: FullAssetItem | undefined) => void
     ): void;
+    exportVideo(
+      params: {
+        identifier: string;
+        resultSavePath: string;
+      },
+      callback: (item: FullAssetItem | undefined) => void
+    ): void;
     getAssets(
       options: FetchAssetsOptions,
       callback: (item: AssetItem[]) => void
@@ -209,6 +216,15 @@ export const mediaLibrary = {
   getAsset(id: string): Promise<FullAssetItem | undefined> {
     return new Promise<FullAssetItem | undefined>((resolve) => {
       __mediaLibrary.getAsset(id, (response) => resolve(response));
+    });
+  },
+
+  exportVideo(params: {
+    identifier: string;
+    resultSavePath: string;
+  }): Promise<FullAssetItem | undefined> {
+    return new Promise<FullAssetItem | undefined>((resolve) => {
+      __mediaLibrary.exportVideo(params, (response) => resolve(response));
     });
   },
 

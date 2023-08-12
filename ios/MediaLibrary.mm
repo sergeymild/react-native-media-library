@@ -53,12 +53,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
 -(void)installJSIBindings:(RCTBridge *) _bridge runtime:(jsi::Runtime*)runtime_ {
 
+    // MARK: cacheDir
     auto cacheDir = JSI_HOST_FUNCTION("cacheDir", 1) {
         auto *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
         NSLog(@"===== %@", paths);
         return [Helpers toJSIString:paths runtime_:&runtime];
     });
 
+    // MARK: getCollections
     auto getCollections = JSI_HOST_FUNCTION("getCollections", 1) {
         auto resolve = std::make_shared<jsi::Value>(runtime, args[0]);
         
@@ -74,6 +76,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: getAssets
     auto getAssets = JSI_HOST_FUNCTION("getAssets", 2) {
         int limit = -1;
         int offset = -1;
@@ -136,6 +139,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: getAsset
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = [Helpers toString:args[0].asString(runtime) runtime_:&runtime];
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -157,6 +161,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: saveToLibrary
     auto saveToLibrary = JSI_HOST_FUNCTION("saveToLibrary", 2) {
         auto params = args[0].asObject(runtime);
         auto localUri = [Helpers toString:params.getProperty(runtime, "localUrl").asString(runtime) runtime_:&runtime];
@@ -194,6 +199,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: fetchVideoFrame
     auto fetchVideoFrame = JSI_HOST_FUNCTION("fetchVideoFrame", 2) {
         auto params = args[0].asObject(runtime);
         auto url = [Helpers toString:params.getProperty(runtime, "url").asString(runtime) runtime_:&runtime];
@@ -231,6 +237,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: combineImages
     auto combineImages = JSI_HOST_FUNCTION("combineImages", 2) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -272,7 +279,34 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         return jsi::Value::undefined();
     });
+    
+    // MARK: combineImages
+    auto exportVideo = JSI_HOST_FUNCTION("exportVideo", 2) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
 
+        auto rawIdentifier = params.getProperty(runtime, "identifier").asString(runtime).utf8(runtime);
+        auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
+        
+        NSString *identifier = [[NSString alloc] initWithCString:rawIdentifier.c_str()
+                                                        encoding:NSUTF8StringEncoding];
+        
+        NSString *resultPath = [[NSString alloc] initWithCString:rawPath.c_str()
+                                                        encoding:NSUTF8StringEncoding];
+        
+        [MediaAssetManager exportVideoWithIdentifier:identifier resultSavePath:resultPath completion:^(BOOL success) {
+            auto result = success ? RESULT_TRUE : RESULT_FALSE;
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+            });
+        }];
+
+        return jsi::Value::undefined();
+    });
+
+    // MARK: imageSizes
     auto imageSizes = JSI_HOST_FUNCTION("imageSizes", 2) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -301,6 +335,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: imageResize
     auto imageResize = JSI_HOST_FUNCTION("imageResize", 1) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -341,6 +376,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
 
+    // MARK: imageCrop
     auto imageCrop = JSI_HOST_FUNCTION("imageCrop", 1) {
         auto params = args[0].asObject(runtime);
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
@@ -394,6 +430,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     exportModule.setProperty(*runtime_, "imageSizes", std::move(imageSizes));
     exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
     exportModule.setProperty(*runtime_, "imageCrop", std::move(imageCrop));
+    exportModule.setProperty(*runtime_, "exportVideo", std::move(exportVideo));
     exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
