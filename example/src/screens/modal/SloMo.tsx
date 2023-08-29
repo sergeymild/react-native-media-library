@@ -1,12 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
 import Video from 'react-native-video';
-
-export const convertLocalIdentifierToAssetLibrary = (localIdentifier, ext) => {
-  const hash = localIdentifier.split('/')[0];
-  return `assets-library://asset/asset.${ext}?id=${hash}&ext=${ext}`;
-};
 
 export const SloMo: React.FC = () => {
   const [asset, setAsset] = useState<any>();
@@ -28,7 +23,7 @@ export const SloMo: React.FC = () => {
       });
   }, []);
 
-  console.log('[SloMo.SloMo!!]', asset?.url);
+  console.log('[SloMo.SloMo!!]', asset?.uri);
   return (
     <View style={{ flex: 1 }}>
       {!!asset && (
@@ -43,7 +38,7 @@ export const SloMo: React.FC = () => {
             //   asset.uri.replace('ph://', ''),
             //   'mov'
             // ),
-            uri: asset.url,
+            uri: asset.uri,
           }}
         />
       )}

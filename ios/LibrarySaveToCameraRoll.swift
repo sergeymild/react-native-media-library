@@ -29,17 +29,10 @@ public class LibrarySaveToCameraRoll: NSObject {
             fileExtension as CFString,
             nil
         ) else { return .unknown }
-        
-        if (UTTypeConformsTo(fileUTI.takeRetainedValue(), kUTTypeImage)) {
-            return .image;
-        }
-        
-        if (UTTypeConformsTo(fileUTI.takeRetainedValue(), kUTTypeMovie)) {
-            return .video;
-        }
-        if (UTTypeConformsTo(fileUTI.takeRetainedValue(), kUTTypeAudio)) {
-            return .audio;
-        }
+        let value = fileUTI.takeRetainedValue()
+        if (UTTypeConformsTo(value, kUTTypeImage)) { return .image }
+        if (UTTypeConformsTo(value, kUTTypeMovie)) { return .video }
+        if (UTTypeConformsTo(value, kUTTypeAudio)) { return .audio }
         return .unknown
     }
     
