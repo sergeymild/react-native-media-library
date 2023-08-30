@@ -41,7 +41,7 @@ object MedialLibraryCreateAsset {
       MediaLibraryUtils.getMimeType(context.contentResolver, uri),
       false
     ) ?: return callback("E_COULD_NOT_GUESS_FILE_TYPE", null)
-    if (album != null && album.isNotEmpty()) {
+    if (!album.isNullOrEmpty()) {
       destDir = File(destDir, album)
       if (!destDir.exists() && !destDir.mkdirs()) {
         return callback("E_WRITE_EXTERNAL_STORAGE_CREATE_ALBUM", null)

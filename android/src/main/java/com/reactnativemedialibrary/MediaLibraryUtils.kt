@@ -79,7 +79,7 @@ object MediaLibraryUtils {
     val extension = src.extension
     val suffixLimit = Short.MAX_VALUE.toInt()
     while (newFile.exists()) {
-      newFile = File(destDir, filename + "_" + suffix + extension)
+      newFile = File(destDir, "${filename}_$suffix.$extension")
       suffix++
       if (suffix > suffixLimit) {
         return "E_FILE_NAME_SUFFIX_REACHED"
