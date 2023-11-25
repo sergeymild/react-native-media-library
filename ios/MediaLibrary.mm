@@ -7,7 +7,7 @@
 #import <React/RCTBlobManager.h>
 #import <React/RCTUIManager.h>
 #import <React/RCTBridge+Private.h>
-#import <ReactCommon/RCTTurboModule.h>
+#import <React-NativeModulesApple/ReactCommon/RCTTurboModule.h>
 
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
@@ -20,7 +20,7 @@ using namespace facebook;
 
 @interface MediaLibrary()
 {
-    
+
 }
 @end
 
@@ -63,7 +63,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     // MARK: getCollections
     auto getCollections = JSI_HOST_FUNCTION("getCollections", 1) {
         auto resolve = std::make_shared<jsi::Value>(runtime, args[0]);
-        
+
         [MediaAssetManager fetchCollectionsWithCompletion:^(NSString * _Nonnull json) {
             std::string resultString = [Helpers toCString:json];
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
@@ -121,7 +121,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             auto type =rawMediaTypes.getValueAtIndex(runtime, i);
             [mediaType addObject:[Helpers toString:type.asString(runtime) runtime_:&runtime]];
         }
-        
+
         [MediaAssetManager fetchAssetsWithLimit:limit
                                          offset:offset
                                          sortBy:sortBy
@@ -143,7 +143,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     auto getAsset = JSI_HOST_FUNCTION("getAsset", 2) {
         auto _id = [Helpers toString:args[0].asString(runtime) runtime_:&runtime];
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         [MediaAssetManager fetchAssetWithIdentifier:_id completion:^(NSString * _Nullable json) {
             std::string resultString = [Helpers toCString:json];
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
@@ -156,8 +156,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
         }];
-        
-        
+
+
         return jsi::Value::undefined();
     });
 
@@ -171,20 +171,20 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             album = [Helpers toString:rawAlbum.asString(runtime) runtime_:&runtime];
         }
         auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
-        
+
         [LibrarySaveToCameraRoll saveToCameraRollWithLocalUri:localUri
                                                         album:album
                                                      callback:^(NSString * _Nullable error, NSString * _Nullable json) {
             std::string resultString = "";
             std::string errorString = "";
-            
+
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
                 errorString = [Helpers toCString:error];
             } else {
                 resultString = [Helpers toCString:json];
             }
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
                 if (err.size() > 0) {
                     resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
@@ -262,11 +262,11 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             }
             NSString* error = [LibraryCombineImages combineImagesWithImages:imagesArray
                                                              resultSavePath:resultSavePath];
-            
+
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
             }
-            
+
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
@@ -279,7 +279,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         return jsi::Value::undefined();
     });
-    
+
     // MARK: combineImages
     auto exportVideo = JSI_HOST_FUNCTION("exportVideo", 2) {
         auto params = args[0].asObject(runtime);
@@ -287,13 +287,13 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         auto rawIdentifier = params.getProperty(runtime, "identifier").asString(runtime).utf8(runtime);
         auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
-        
+
         NSString *identifier = [[NSString alloc] initWithCString:rawIdentifier.c_str()
                                                         encoding:NSUTF8StringEncoding];
-        
+
         NSString *resultPath = [[NSString alloc] initWithCString:rawPath.c_str()
                                                         encoding:NSUTF8StringEncoding];
-        
+
         [MediaAssetManager exportVideoWithIdentifier:identifier resultSavePath:resultPath completion:^(BOOL success) {
             auto result = success ? RESULT_TRUE : RESULT_FALSE;
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
@@ -320,10 +320,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
             [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
         }
-        
+
         [LibraryImageSize getSizesWithPaths:imagesPathArray completion:^(NSString * _Nonnull result) {
             std::string resultString = [Helpers toCString:result];
-            
+
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
                 auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
@@ -358,11 +358,11 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                          height:height
                                                          format:format
                                                  resultSavePath:resultSavePath];
-            
+
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
             }
-            
+
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
@@ -401,11 +401,11 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                        height:[NSNumber numberWithDouble:rawHeight]
                                                        format:format
                                                resultSavePath:resultSavePath];
-            
+
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
             }
-            
+
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(result), &runtime, &args, resolve]() {
