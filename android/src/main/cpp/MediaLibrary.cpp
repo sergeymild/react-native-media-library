@@ -209,6 +209,23 @@ void MediaLibrary::installJSIBindings() {
        return jsi::Value::undefined();
    });
 
+    auto downloadAsBase64 = JSI_HOST_FUNCTION("downloadAsBase64", 1) {
+       auto stringify = runtime.global()
+               .getPropertyAsObject(runtime, "JSON")
+               .getPropertyAsFunction(runtime, "stringify");
+       auto result = stringify.call(runtime, args[0]).asString(runtime).utf8(runtime);
+       auto params = jni::make_jstring(result);
+       auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+
+       auto method = javaPart_->getClass()->getMethod<void(jni::local_ref<JString>, GetAssetsCallback::javaobject)>("downloadAsBase64");
+
+       std::function<void(std::string)> wrapperOnChange = createCallback(resolve, true);
+
+       auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
+       method(javaPart_.get(), params, obj.get());
+       return jsi::Value::undefined();
+   });
+
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
@@ -219,6 +236,7 @@ void MediaLibrary::installJSIBindings() {
     exportModule.setProperty(*runtime_, "imageResize", std::move(imageResize));
     exportModule.setProperty(*runtime_, "imageCrop", std::move(imageCrop));
     exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
+    exportModule.setProperty(*runtime_, "downloadAsBase64", std::move(downloadAsBase64));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 

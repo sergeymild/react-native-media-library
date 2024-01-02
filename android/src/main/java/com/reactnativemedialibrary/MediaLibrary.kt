@@ -164,6 +164,17 @@ class MediaLibrary(context: Context) {
   }
 
   @DoNotStrip
+  fun downloadAsBase64(params: String, callback: GetAssetsCallback) {
+    scope.launch {
+      val input = params.asJsonInput()
+      val base64String = Base64Downloader.download(input.getString("url"))
+      val response = JSONObject()
+      response.put("base64", base64String)
+      callback.onChange(response.toString())
+    }
+  }
+
+  @DoNotStrip
   fun cacheDir(): String {
     return context.cacheDir.absolutePath
   }

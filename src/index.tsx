@@ -76,6 +76,11 @@ declare global {
       ) => void
     ): void;
 
+    downloadAsBase64(
+      params: { url: string },
+      callback: (data: { base64: string } | undefined) => void
+    ): void;
+
     cacheDir(): string;
   };
 }
@@ -302,6 +307,14 @@ export const mediaLibrary = {
         { images: prepareImages(params.images) },
         resolve
       );
+    });
+  },
+
+  downloadAsBase64(params: {
+    url: string;
+  }): Promise<{ base64: string } | undefined> {
+    return new Promise((resolve) => {
+      __mediaLibrary.downloadAsBase64(params, resolve);
     });
   },
 };
