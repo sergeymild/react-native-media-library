@@ -37,6 +37,7 @@
 		8D9D18A92A792D3100B6F52B /* AssetsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsManager.swift; sourceTree = "<group>"; };
 		8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImageResize.swift; sourceTree = "<group>"; };
 		8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCombineImages.swift; sourceTree = "<group>"; };
+		9284625C2B4402FB00A4BFF2 /* Base64Downloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base64Downloader.swift; sourceTree = "<group>"; };
 		92925EDD29B218F800300C41 /* Helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Helpers.mm; sourceTree = "<group>"; };
 		929FAD0D2928D9DD000DF958 /* MediaLibrary.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaLibrary.mm; sourceTree = "<group>"; };
 		929FAD112928DB74000DF958 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
@@ -69,6 +70,7 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				9284625C2B4402FB00A4BFF2 /* Base64Downloader.swift */,
 				8DB839EC2A7E179E00E10431 /* LibraryCombineImages.swift */,
 				8DB839EA2A7E0F8E00E10431 /* LibraryImageResize.swift */,
 				8D4B43422A7BF0A300B3E391 /* LibraryImageSize.swift */,

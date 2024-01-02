@@ -418,6 +418,31 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
         return jsi::Value::undefined();
     });
+    
+    // MARK: downloadAsBase64
+    auto downloadAsBase64 = JSI_HOST_FUNCTION("downloadAsBase64", 1) {
+        auto params = args[0].asObject(runtime);
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+
+        auto imageUrl = params.getProperty(runtime, "url").asString(runtime).utf8(runtime);
+
+        NSString *url = [[NSString alloc] initWithCString:imageUrl.c_str() encoding:NSUTF8StringEncoding];
+
+        dispatch_async(defQueue, ^{
+            [Base64Downloader downloadWithUrl:url completion:^(NSString * _Nullable string) {
+                std::string resultString = [Helpers toCString:string];
+                
+                _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, &args, resolve]() {
+                    auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                    auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                    resolve->asObject(runtime).asFunction(runtime).call(runtime, value);
+                });
+            }];
+        });
+
+
+        return jsi::Value::undefined();
+    });
 
 
     auto exportModule = jsi::Object(*runtime_);
@@ -432,6 +457,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     exportModule.setProperty(*runtime_, "imageCrop", std::move(imageCrop));
     exportModule.setProperty(*runtime_, "exportVideo", std::move(exportVideo));
     exportModule.setProperty(*runtime_, "getCollections", std::move(getCollections));
+    exportModule.setProperty(*runtime_, "downloadAsBase64", std::move(downloadAsBase64));
     runtime_->global().setProperty(*runtime_, "__mediaLibrary", exportModule);
 }
 
