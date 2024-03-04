@@ -52,7 +52,7 @@ declare global {
       callback: (item: Thumbnail) => void
     ): void;
     combineImages(
-      params: { images: string[]; resultSavePath: string },
+      params: { images: string[]; resultSavePath: string, readonly mainImageIndex?: number },
       callback: (item: { result: boolean }) => void
     ): void;
 
@@ -255,12 +255,14 @@ export const mediaLibrary = {
   combineImages(params: {
     images: (ImageRequireSource | string)[];
     resultSavePath: string;
+    readonly mainImageIndex?: number
   }) {
     return new Promise<{ result: boolean }>((resolve) => {
       __mediaLibrary.combineImages(
         {
           images: prepareImages(params.images),
           resultSavePath: params.resultSavePath,
+          mainImageIndex: params.mainImageIndex,
         },
         resolve
       );
