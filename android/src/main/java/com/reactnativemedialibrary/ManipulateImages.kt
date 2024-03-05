@@ -21,21 +21,42 @@ fun toCompressFormat(format: String): Bitmap.CompressFormat {
   }
 }
 
+data class MultiComponent(val result: Bitmap, val canvas: Canvas, val parentCenterX: Float, val parentCenterY: Float)
+
 object ManipulateImages {
   fun combineImages(input: JSONObject): Boolean {
     val imagesArray = input.getJSONArray("images")
-    val resultSavePath = input.getString("resultSavePath")
+    val resultSavePath = input.getString("resultSavePath").fixFilePathFromJs()
+    val mainImageIndex = input.optInt("mainImageIndex", -1).takeIf { it != -1 }
     val file = File(resultSavePath)
 
     return try {
-      val result = getBitmapFromUrl(imagesArray.getString(0))?.copy(Bitmap.Config.ARGB_8888, true)
-      val canvas = result?.let { Canvas(it) } ?: return false
-      val parentCenterX = canvas.width / 2F
-      val parentCenterY = canvas.height / 2F
+      val (result, canvas, parentCenterX, parentCenterY) = if (mainImageIndex == null) {
+        val result = getBitmapFromUrl(imagesArray.getString(0).fixFilePathFromJs())?.copy(Bitmap.Config.ARGB_8888, true)
+          ?: return false
+        val c = Canvas(result)
+        MultiComponent(
+          result,
+          c,
+          c.width / 2F,
+          c.height / 2F
+        )
+      } else {
+        val sizeSourcePath = imagesArray.getString(mainImageIndex).fixFilePathFromJs()
+        val sizeSourcePathResult = getBitmapFromUrl(sizeSourcePath)?.copy(Bitmap.Config.ARGB_8888, true)
+        val sizeSourcePathCanvas = sizeSourcePathResult?.let { Canvas(it) } ?: return false
+        val w = sizeSourcePathCanvas.width / 2F
+        val h = sizeSourcePathCanvas.height / 2F
+        val result = Bitmap.createBitmap(sizeSourcePathCanvas.width, sizeSourcePathCanvas.height, Bitmap.Config.ARGB_8888)
+        val c = Canvas(result)
+        sizeSourcePathResult.recycle()
+        MultiComponent(result, c, w, h)
+      }
 
-      for (i in 0 until imagesArray.length()) {
-        val url = imagesArray.getString(i)
-        if (i != 0) {
+      for (i in 0 until (imagesArray.length())) {
+        val url = imagesArray.getString(i).fixFilePathFromJs()
+        if (i != 0 || mainImageIndex != null) {
+//        if (i != 1) {
           val bitmap = getBitmapFromUrl(url) ?: return false
           val x = parentCenterX - bitmap.width / 2F
           val y = parentCenterY - bitmap.height / 2F
@@ -59,11 +80,11 @@ object ManipulateImages {
   }
 
   fun imageResize(input: JSONObject): Boolean {
-    val uri = input.getString("uri")
+    val uri = input.getString("uri").fixFilePathFromJs()
     val width = input.getDouble("width")
     val height = input.getDouble("height")
     val format = input.getString("format")
-    val resultSavePath = input.getString("resultSavePath")
+    val resultSavePath = input.getString("resultSavePath").fixFilePathFromJs()
     val file = File(resultSavePath)
 
     return try {
@@ -93,13 +114,13 @@ object ManipulateImages {
   }
 
   fun imageCrop(input: JSONObject): Boolean {
-    val uri = input.getString("uri")
+    val uri = input.getString("uri").fixFilePathFromJs()
     val x = input.getDouble("x")
     val y = input.getDouble("y")
     val width = input.getDouble("width")
     val height = input.getDouble("height")
     val format = input.getString("format")
-    val resultSavePath = input.getString("resultSavePath")
+    val resultSavePath = input.getString("resultSavePath").fixFilePathFromJs()
     val file = File(resultSavePath)
 
     return try {
@@ -136,7 +157,7 @@ object ManipulateImages {
 
     try {
       for (i in 0 until imagesArray.length()) {
-        val url = imagesArray.getString(i)
+        val url = imagesArray.getString(i).fixFilePathFromJs()
         val imageInputStream: InputStream = getInputStreamByUrl(url)
 
         val bitmapOptions: BitmapFactory.Options = BitmapFactory.Options()
@@ -167,6 +188,7 @@ object ManipulateImages {
       file.inputStream()
     }
   }
+
   private fun getBitmapFromUrl(url: String): Bitmap? {
     getInputStreamByUrl(url).use {
       return BitmapFactory.decodeStream(it)
