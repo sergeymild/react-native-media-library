@@ -4,6 +4,9 @@ import {
   NativeModules,
   Platform,
 } from 'react-native';
+import { ColorValue } from './StyleSheet';
+import { processColor } from 'react-native';
+import type { ProcessedColorValue } from 'react-native';
 
 const LINKING_ERROR =
   `The package 'react-native-media-library' doesn't seem to be linked. Make sure: \n\n` +
@@ -52,7 +55,12 @@ declare global {
       callback: (item: Thumbnail) => void
     ): void;
     combineImages(
-      params: { images: string[]; resultSavePath: string, readonly mainImageIndex?: number },
+      params: {
+        images: string[];
+        resultSavePath: string;
+        readonly mainImageIndex?: number;
+        readonly backgroundColor?: ProcessedColorValue | null | undefined;
+      },
       callback: (item: { result: boolean }) => void
     ): void;
 
@@ -255,7 +263,8 @@ export const mediaLibrary = {
   combineImages(params: {
     images: (ImageRequireSource | string)[];
     resultSavePath: string;
-    readonly mainImageIndex?: number
+    readonly mainImageIndex?: number;
+    readonly backgroundColor?: ColorValue | undefined;
   }) {
     return new Promise<{ result: boolean }>((resolve) => {
       __mediaLibrary.combineImages(
@@ -263,6 +272,9 @@ export const mediaLibrary = {
           images: prepareImages(params.images),
           resultSavePath: params.resultSavePath,
           mainImageIndex: params.mainImageIndex,
+          backgroundColor: params.backgroundColor
+            ? processColor(params.backgroundColor)
+            : processColor('transparent'),
         },
         resolve
       );
