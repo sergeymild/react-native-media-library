@@ -245,6 +245,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         auto imagesRawArray = params.getPropertyAsObject(runtime, "images").asArray(runtime);
         auto rawPath = params.getProperty(runtime, "resultSavePath").asString(runtime).utf8(runtime);
         auto mainImageIndex = params.getProperty(runtime, "mainImageIndex").asNumber();
+        auto backgroundColorNum = params.getProperty(runtime, "backgroundColor").asNumber();
+        UIColor *backgroundColor = [RCTConvert UIColor:[NSNumber numberWithDouble:backgroundColorNum]];
+
         auto arraySize = imagesRawArray.size(runtime);
         NSString *resultSavePath = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
 
@@ -263,8 +266,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             }
             NSString* error = [LibraryCombineImages combineImagesWithImages:imagesArray
                                                              resultSavePath:resultSavePath
-                                                             mainImageIndex:mainImageIndex];
-                                                             
+                                                             mainImageIndex:mainImageIndex
+                                                            backgroundColor:backgroundColor];
+            
             if (error) {
                 RCTLogError(@"MediaLibraryError %@", error);
             }

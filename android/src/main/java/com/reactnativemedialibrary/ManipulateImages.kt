@@ -3,7 +3,10 @@ package com.reactnativemedialibrary
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.Log
+import androidx.annotation.ColorInt
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -28,6 +31,9 @@ object ManipulateImages {
     val imagesArray = input.getJSONArray("images")
     val resultSavePath = input.getString("resultSavePath").fixFilePathFromJs()
     val mainImageIndex = input.optInt("mainImageIndex", -1).takeIf { it != -1 }
+
+    @ColorInt
+    val backgroundColor = input.optInt("backgroundColor", -1).takeIf { it != -1 }
     val file = File(resultSavePath)
 
     return try {
@@ -47,10 +53,18 @@ object ManipulateImages {
         val sizeSourcePathCanvas = sizeSourcePathResult?.let { Canvas(it) } ?: return false
         val w = sizeSourcePathCanvas.width / 2F
         val h = sizeSourcePathCanvas.height / 2F
-        val result = Bitmap.createBitmap(sizeSourcePathCanvas.width, sizeSourcePathCanvas.height, Bitmap.Config.ARGB_8888)
+        val result =
+          Bitmap.createBitmap(sizeSourcePathCanvas.width, sizeSourcePathCanvas.height, Bitmap.Config.ARGB_8888)
         val c = Canvas(result)
         sizeSourcePathResult.recycle()
         MultiComponent(result, c, w, h)
+      }
+
+      if (backgroundColor != null) {
+        canvas.drawPaint(Paint().apply {
+          color = backgroundColor
+          style = Paint.Style.FILL
+        })
       }
 
       for (i in 0 until (imagesArray.length())) {

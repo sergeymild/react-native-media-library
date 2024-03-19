@@ -14,7 +14,8 @@ public class LibraryCombineImages: NSObject {
     public static func combineImages(
         images: [UIImage],
         resultSavePath: NSString,
-        mainImageIndex: NSInteger
+        mainImageIndex: NSInteger,
+        backgroundColor: UIColor
     ) -> String? {
         if images.isEmpty {
             return "LibraryCombineImages.combineImages.emptyArray"
@@ -23,10 +24,11 @@ public class LibraryCombineImages: NSObject {
         let mainImage = images[mainImageIndex]
         let parentCenterX = mainImage.size.width / 2
         let parentCenterY = mainImage.size.height / 2
-        var newImageSize = CGSize(width: mainImage.size.width, height: mainImage.size.height)
+        let newImageSize = CGSize(width: mainImage.size.width, height: mainImage.size.height)
         
         UIGraphicsBeginImageContextWithOptions(newImageSize, false, UIScreen.main.scale)
-        
+        backgroundColor.setFill()
+        UIGraphicsGetCurrentContext()!.fill(CGRect(x: 0, y: 0, width: newImageSize.width, height: newImageSize.height))
         for image in images {
             let x = parentCenterX - image.size.width / 2
             let y = parentCenterY - image.size.height / 2
