@@ -42,7 +42,11 @@ declare global {
     ): void;
     getAssets(
       options: FetchAssetsOptions,
-      callback: (item: AssetItem[]) => void
+      callback: (items: AssetItem[]) => void
+    ): void;
+    getFromDisk(
+      options: {path: string; extensions?: string},
+      callback: (items: DiskAssetItem[]) => void
     ): void;
     getCollections(callback: (items: CollectionItem[]) => void): void;
     saveToLibrary(
@@ -150,6 +154,14 @@ export interface AssetItem {
   readonly subtypes?: MediaSubType[];
 }
 
+export interface DiskAssetItem {
+  readonly isDirectory: boolean;
+  readonly filename: string;
+  readonly creationTime: number;
+  readonly size: number;
+  readonly uri: string;
+}
+
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
@@ -203,7 +215,6 @@ export const mediaLibrary = {
       mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
       sortOrder: options?.sortOrder,
-      extensions: options?.extensions,
       requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
       offset: options?.offset,
@@ -217,6 +228,11 @@ export const mediaLibrary = {
     }
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
+    });
+  },
+  getFromDisk(options: {path: string; extensions?: string[]}): Promise<DiskAssetItem[]> {
+    return new Promise<DiskAssetItem[]>((resolve) => {
+      __mediaLibrary.getFromDisk({...options, extensions: options.extensions ? options.extensions.join(',') : undefined}, (response) => resolve(response));
     });
   },
 
