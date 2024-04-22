@@ -109,9 +109,6 @@ void MediaLibrary::installJSIBindings() {
         MediaAssetFileNative::fileVector_t files;
 
         MediaAssetFileNative::getFilesList(rawPath.c_str(), sort.c_str(), &files);
-
-        MediaAssetFileNative::response_t response;
-        response.reserve(files.size());
         std::stringstream result;
         result << "[";
         int size = files.size();
