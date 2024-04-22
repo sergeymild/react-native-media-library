@@ -175,7 +175,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return jsi::Value::undefined();
     });
     
-    auto getFromDisk = JSI_HOST_FUNCTION("getFromDisk", 1) {
+    auto getFromDisk = JSI_HOST_FUNCTION("getFromDisk", 2) {
         std::string sortBy;
         std::string sortOrder;
         

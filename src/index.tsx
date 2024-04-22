@@ -188,7 +188,6 @@ export interface ImageCropParams {
 }
 
 export interface FullAssetItem extends AssetItem {
-  readonly url: string;
   // on android, it will be available only from API 24 (N)
   readonly location?: { latitude: number; longitude: number };
 }
@@ -215,7 +214,6 @@ export const mediaLibrary = {
       mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
       sortOrder: options?.sortOrder,
-      requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
       offset: options?.offset,
       onlyFavorites: options?.onlyFavorites ?? false,

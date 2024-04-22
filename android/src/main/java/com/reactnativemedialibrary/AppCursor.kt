@@ -106,6 +106,7 @@ fun Cursor.mapToJson(
   input: JSONObject,
   limit: Int
 ) {
+  if (count == 0) return
   val idIndex = getColumnIndex(MediaStore.Images.Media._ID)
   val filenameIndex = getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
   val mediaTypeIndex = getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE)
@@ -138,7 +139,6 @@ fun Cursor.mapToJson(
     `object`.put(duration.name, getInt(durationIndex) / 1000.0)
     `object`.put(width.name, widthHeight[0])
     `object`.put(height.name, widthHeight[1])
-    `object`.put(url.name, localUri)
     `object`.put(uri.name, localUri)
     array.put(`object`)
     if (limit == 1) break
