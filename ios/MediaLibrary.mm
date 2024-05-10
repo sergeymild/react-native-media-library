@@ -359,16 +359,35 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
 
         for (int i = 0; i < arraySize; i++) {
-            auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
-            [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
+            auto obj = imagesRawArray.getValueAtIndex(runtime, i).asObject(runtime);
+            auto rawPath = obj.getProperty(runtime, "image").asString(runtime).utf8(runtime);
+            NSString *path = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+            NSMutableDictionary* pos = [[NSMutableDictionary alloc] init];
+            if (obj.hasProperty(runtime, "positions")) {
+                auto rawPos = obj.getProperty(runtime, "positions").asObject(runtime);
+                NSInteger x = rawPos.getProperty(runtime, "x").asNumber();
+                NSInteger y = rawPos.getProperty(runtime, "y").asNumber();
+                @try {
+                    [pos setValue:[NSNumber numberWithDouble:x] forKey:@"x"];
+                    [pos setValue:[NSNumber numberWithDouble:y] forKey:@"y"];
+                } @catch (NSException *exception) {
+                    NSLog(@"--");
+                }
+            }
+            [imagesPathArray addObject:@{@"image": path, @"positions": pos}];
         }
 
+        auto movedImages = std::move(imagesRawArray);
         dispatch_async(defQueue, ^{
-            NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
-            for (NSString* path in imagesPathArray) {
+            NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
+            
+            for (NSDictionary* obj in imagesPathArray) {
+                NSString *path = [obj valueForKey:@"image"];
+                NSDictionary *positions = [obj valueForKey:@"positions"];
                 auto image = [LibraryImageSize imageWithPath:path];
-                if (image) [imagesArray addObject:image];
+                if (image) [imagesArray addObject:@{@"image": image, @"positions": positions}];
             }
+            [imagesPathArray removeAllObjects];
             NSString* error = [LibraryCombineImages combineImagesWithImages:imagesArray
                                                              resultSavePath:resultSavePath
                                                              mainImageIndex:mainImageIndex

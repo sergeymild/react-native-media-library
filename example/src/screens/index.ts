@@ -27,6 +27,11 @@ export const screens = [
         slug: 'Base64Image',
         getScreen: () => require('./modal/Base64Image').Base64Image,
       },
+      {
+        name: 'CombineImages',
+        slug: 'CombineImages',
+        getScreen: () => require('./modal/CombineImages').CombineImages,
+      },
     ],
   },
 ];
