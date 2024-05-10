@@ -4,6 +4,9 @@ import {
   NativeModules,
   Platform,
 } from 'react-native';
+import { ColorValue } from './StyleSheet';
+import { processColor } from 'react-native';
+import type { ProcessedColorValue } from 'react-native';
 
 const LINKING_ERROR =
   `The package 'react-native-media-library' doesn't seem to be linked. Make sure: \n\n` +
@@ -39,7 +42,11 @@ declare global {
     ): void;
     getAssets(
       options: FetchAssetsOptions,
-      callback: (item: AssetItem[]) => void
+      callback: (items: AssetItem[]) => void
+    ): void;
+    getFromDisk(
+      options: {path: string; extensions?: string},
+      callback: (items: DiskAssetItem[]) => void
     ): void;
     getCollections(callback: (items: CollectionItem[]) => void): void;
     saveToLibrary(
@@ -52,7 +59,12 @@ declare global {
       callback: (item: Thumbnail) => void
     ): void;
     combineImages(
-      params: { images: string[]; resultSavePath: string },
+      params: {
+        images: string[];
+        resultSavePath: string;
+        readonly mainImageIndex?: number;
+        readonly backgroundColor?: ProcessedColorValue | null | undefined;
+      },
       callback: (item: { result: boolean }) => void
     ): void;
 
@@ -74,6 +86,11 @@ declare global {
           size: number;
         }[]
       ) => void
+    ): void;
+
+    downloadAsBase64(
+      params: { url: string },
+      callback: (data: { base64: string } | undefined) => void
     ): void;
 
     cacheDir(): string;
@@ -137,6 +154,14 @@ export interface AssetItem {
   readonly subtypes?: MediaSubType[];
 }
 
+export interface DiskAssetItem {
+  readonly isDirectory: boolean;
+  readonly filename: string;
+  readonly creationTime: number;
+  readonly size: number;
+  readonly uri: string;
+}
+
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
@@ -163,7 +188,6 @@ export interface ImageCropParams {
 }
 
 export interface FullAssetItem extends AssetItem {
-  readonly url: string;
   // on android, it will be available only from API 24 (N)
   readonly location?: { latitude: number; longitude: number };
 }
@@ -190,8 +214,6 @@ export const mediaLibrary = {
       mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
       sortOrder: options?.sortOrder,
-      extensions: options?.extensions,
-      requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
       offset: options?.offset,
       onlyFavorites: options?.onlyFavorites ?? false,
@@ -204,6 +226,11 @@ export const mediaLibrary = {
     }
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
+    });
+  },
+  getFromDisk(options: {path: string; extensions?: string[]}): Promise<DiskAssetItem[]> {
+    return new Promise<DiskAssetItem[]>((resolve) => {
+      __mediaLibrary.getFromDisk({...options, extensions: options.extensions ? options.extensions.join(',') : undefined}, (response) => resolve(response));
     });
   },
 
@@ -250,12 +277,18 @@ export const mediaLibrary = {
   combineImages(params: {
     images: (ImageRequireSource | string)[];
     resultSavePath: string;
+    readonly mainImageIndex?: number;
+    readonly backgroundColor?: ColorValue | undefined;
   }) {
     return new Promise<{ result: boolean }>((resolve) => {
       __mediaLibrary.combineImages(
         {
           images: prepareImages(params.images),
           resultSavePath: params.resultSavePath,
+          mainImageIndex: params.mainImageIndex,
+          backgroundColor: params.backgroundColor
+            ? processColor(params.backgroundColor)
+            : processColor('transparent'),
         },
         resolve
       );
@@ -302,6 +335,14 @@ export const mediaLibrary = {
         { images: prepareImages(params.images) },
         resolve
       );
+    });
+  },
+
+  downloadAsBase64(params: {
+    url: string;
+  }): Promise<{ base64: string } | undefined> {
+    return new Promise((resolve) => {
+      __mediaLibrary.downloadAsBase64(params, resolve);
     });
   },
 };

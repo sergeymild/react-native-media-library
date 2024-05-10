@@ -22,6 +22,11 @@ export const screens = [
         slug: 'ExportVideo',
         getScreen: () => require('./modal/ExportVideo').ExportVideo,
       },
+      {
+        name: 'Base64Image',
+        slug: 'Base64Image',
+        getScreen: () => require('./modal/Base64Image').Base64Image,
+      },
     ],
   },
 ];

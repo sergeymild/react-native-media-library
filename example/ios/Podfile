@@ -1,5 +1,9 @@
-require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
 platform :ios, '14.0'
 install! 'cocoapods', :deterministic_uuids => false
@@ -13,6 +17,7 @@ if linkage != nil
 end
 
 target 'MediaLibraryExample' do
+    use_modular_headers!
   config = use_native_modules!
 
   # Flags change depending on the env values.
@@ -48,6 +53,7 @@ target 'MediaLibraryExample' do
               config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
               config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
               config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+              config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
             end
          end
   end
