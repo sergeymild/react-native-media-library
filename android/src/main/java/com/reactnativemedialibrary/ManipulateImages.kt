@@ -65,8 +65,8 @@ class ManipulateImages(private val context: Context) {
         var x = parentCenterX - bitmap.width / 2F
         var y = parentCenterY - bitmap.height / 2F
         if (positions != null) {
-          x = PixelUtil.toPixelFromDIP(positions.getDouble("x").toFloat())
-          y = PixelUtil.toPixelFromDIP(positions.getDouble("y").toFloat())
+          x = positions.getDouble("x").toFloat()
+          y = positions.getDouble("y").toFloat()
           if (x > canvas.width) x = (canvas.width - bitmap.width).toFloat()
           if (y > canvas.height) y = (canvas.height - bitmap.height).toFloat()
           if (x < 0) x = 0F
