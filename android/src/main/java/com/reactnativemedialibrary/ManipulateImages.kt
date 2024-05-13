@@ -173,8 +173,8 @@ class ManipulateImages(private val context: Context) {
         val bitmap = getBitmapFromUrl(url) ?: throw RuntimeException("failCreateBitmap")
 
         val imageDimensions = JSONObject()
-        imageDimensions.put("width", bitmap.height)
-        imageDimensions.put("height", bitmap.width)
+        imageDimensions.put("width", bitmap.width)
+        imageDimensions.put("height", bitmap.height)
         imagesDimensions.put(imageDimensions)
       }
     } catch (error: Throwable) {
