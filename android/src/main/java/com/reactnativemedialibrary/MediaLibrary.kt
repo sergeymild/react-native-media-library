@@ -29,18 +29,20 @@ class MediaLibrary(context: Context) {
   @Suppress("KotlinJniMissingFunction")
   external fun installJSIBindings()
   private val context: Context
+  private val manipulateImages: ManipulateImages
 
   private val job = SupervisorJob()
   val scope = CoroutineScope(Dispatchers.IO + job)
 
   init {
     this.context = context.applicationContext
+    manipulateImages = ManipulateImages(context.applicationContext)
     MediaLibrary.context = WeakReference(context.applicationContext)
   }
 
   fun install(context: ReactApplicationContext): Boolean {
     System.loadLibrary("react-native-media-library")
-    val jsContext = context.javaScriptContextHolder
+    val jsContext = context.javaScriptContextHolder!!
     val jsCallInvokerHolder = context.catalystInstance.jsCallInvokerHolder
     mHybridData = initHybrid(
       jsContext.get(),
@@ -123,7 +125,7 @@ class MediaLibrary(context: Context) {
   fun combineImages(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()
-      if (ManipulateImages.combineImages(input)) {
+      if (manipulateImages.combineImages(input)) {
         callback.onChange("{\"result\": true}")
       } else {
         callback.onChange("{\"result\": false}")
@@ -135,7 +137,7 @@ class MediaLibrary(context: Context) {
   fun imageResize(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()
-      if (ManipulateImages.imageResize(input)) {
+      if (manipulateImages.imageResize(input)) {
         callback.onChange("{\"result\": true}")
       } else {
         callback.onChange("{\"result\": false}")
@@ -147,7 +149,7 @@ class MediaLibrary(context: Context) {
   fun imageCrop(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()
-      if (ManipulateImages.imageCrop(input)) {
+      if (manipulateImages.imageCrop(input)) {
         callback.onChange("{\"result\": true}")
       } else {
         callback.onChange("{\"result\": false}")
@@ -159,7 +161,7 @@ class MediaLibrary(context: Context) {
   fun imageSizes(params: String, callback: GetAssetsCallback) {
     scope.launch {
       val input = params.asJsonInput()
-      callback.onChange(ManipulateImages.imageSizes(input).toString())
+      callback.onChange(manipulateImages.imageSizes(input).toString())
     }
   }
 

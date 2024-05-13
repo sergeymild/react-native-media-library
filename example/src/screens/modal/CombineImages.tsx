@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { mediaLibrary } from 'react-native-media-library';
 
 export const CombineImages: React.FC = () => {
@@ -22,8 +22,8 @@ export const CombineImages: React.FC = () => {
             images: [
               url,
               {
-                image: require('../../../assets/3.png'),
-                positions: { x: 20, y: 100 },
+                image: require('../../../assets/tombstone.png'),
+                positions: { x: 0, y: 0 },
               },
             ],
             resultSavePath: path,
@@ -35,6 +35,13 @@ export const CombineImages: React.FC = () => {
       >
         <Text children={'Combine'} />
       </TouchableOpacity>
+
+      <Image
+        source={require('../../../assets/tombstone.png')}
+        style={{ width: 40, height: 40 }}
+      />
+
+      <Image source={{ uri: url }} style={{ width: 40, height: 40 }} />
 
       <Image
         key={render}

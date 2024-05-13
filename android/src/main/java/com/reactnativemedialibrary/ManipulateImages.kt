@@ -1,5 +1,7 @@
 package com.reactnativemedialibrary
 
+import android.content.Context
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -12,6 +14,8 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
+import java.lang.RuntimeException
+import java.net.URI
 import java.net.URL
 
 
@@ -24,7 +28,7 @@ fun toCompressFormat(format: String): Bitmap.CompressFormat {
   }
 }
 
-object ManipulateImages {
+class ManipulateImages(private val context: Context) {
   fun combineImages(input: JSONObject): Boolean {
     val imagesArray = input.getJSONArray("images")
     val resultSavePath = input.getString("resultSavePath").fixFilePathFromJs()
@@ -37,6 +41,7 @@ object ManipulateImages {
     return try {
       val mainImageJson = imagesArray.getJSONObject(mainImageIndex)
       val mainImage = mainImageJson.getString("image").fixFilePathFromJs()
+      println("🗡️ $mainImage")
       val mainBitmap = getBitmapFromUrl(mainImage)?.copy(Bitmap.Config.ARGB_8888, true)
       mainBitmap ?: return false
       val canvas = Canvas(mainBitmap)
@@ -54,6 +59,7 @@ object ManipulateImages {
         val obj = imagesArray.getJSONObject(i)
         val url = obj.getString("image").fixFilePathFromJs()
         if (mainImageIndex == i) continue
+        println("🗡️ $url")
         val bitmap = getBitmapFromUrl(url) ?: return false
         val positions = obj.optJSONObject("positions")
         var x = parentCenterX - bitmap.width / 2F
@@ -164,15 +170,11 @@ object ManipulateImages {
     try {
       for (i in 0 until imagesArray.length()) {
         val url = imagesArray.getString(i).fixFilePathFromJs()
-        val imageInputStream: InputStream = getInputStreamByUrl(url)
-
-        val bitmapOptions: BitmapFactory.Options = BitmapFactory.Options()
-        bitmapOptions.inJustDecodeBounds = true
-        BitmapFactory.decodeStream(imageInputStream, null, bitmapOptions)
+        val bitmap = getBitmapFromUrl(url) ?: throw RuntimeException("failCreateBitmap")
 
         val imageDimensions = JSONObject()
-        imageDimensions.put("width", bitmapOptions.outWidth)
-        imageDimensions.put("height", bitmapOptions.outHeight)
+        imageDimensions.put("width", bitmap.height)
+        imageDimensions.put("height", bitmap.width)
         imagesDimensions.put(imageDimensions)
       }
     } catch (error: Throwable) {
@@ -182,22 +184,16 @@ object ManipulateImages {
     return imagesDimensions
   }
 
-  private fun getInputStreamByUrl(url: String): InputStream {
-    return if (url.startsWith("http") || url.startsWith("file")) {
-      val urlConnection = URL(url).openConnection()
-      urlConnection.connect()
-      urlConnection.getInputStream()
-    } else {
-      val file = File(url)
-      if (!file.exists())
-        throw Exception("MediaLibrary.getInputStreamByUri is trying to access an non-existent File")
-      file.inputStream()
-    }
-  }
+  private fun getBitmapFromUrl(source: String?): Bitmap? {
+    source ?: return null
+    val resourceId: Int =
+      context.resources.getIdentifier(source, "drawable", context.packageName)
 
-  private fun getBitmapFromUrl(url: String): Bitmap? {
-    getInputStreamByUrl(url).use {
-      return BitmapFactory.decodeStream(it)
+    return if (resourceId == 0) {
+      val uri = URI(source.fixFilePathToJs())
+      BitmapFactory.decodeStream(uri.toURL().openConnection().getInputStream())
+    } else {
+      BitmapFactory.decodeResource(context.resources, resourceId)
     }
   }
 }

@@ -44,11 +44,9 @@ public class LibraryImageSize: NSObject {
         guard let source = imageSource(path: path),
               let url = source.request.url,
               let scheme = url.scheme?.lowercased()
-        else {
-            return nil
-        }
+        else { return nil }
         
-        var image: UIImage? = nil;
+        var image: UIImage? = nil
         if scheme == "file" {
             image = RCTImageFromLocalAssetURL(url) ?? RCTImageFromLocalBundleAssetURL(url)
         } else if scheme == "data" || scheme.hasPrefix("http") {
