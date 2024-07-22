@@ -51,7 +51,7 @@ declare global {
     getCollections(callback: (items: CollectionItem[]) => void): void;
     saveToLibrary(
       params: SaveToLibrary,
-      callback: (item: AssetItem) => void
+      callback: (item: AssetItem | { error: string }) => void
     ): void;
 
     fetchVideoFrame(
@@ -283,8 +283,14 @@ export const mediaLibrary = {
   },
 
   saveToLibrary(params: SaveToLibrary) {
-    return new Promise<AssetItem>((resolve) => {
-      __mediaLibrary.saveToLibrary(params, (response) => resolve(response));
+    return new Promise<AssetItem>((resolve, reject) => {
+      __mediaLibrary.saveToLibrary(params, (response) => {
+        if ('error' in response) {
+          reject(response.error);
+        } else {
+          resolve(response);
+        }
+      });
     });
   },
 

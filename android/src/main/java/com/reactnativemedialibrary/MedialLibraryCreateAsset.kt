@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.util.Log
 import com.facebook.proguard.annotations.DoNotStrip
 import org.json.JSONObject
 import java.io.File
@@ -36,6 +37,8 @@ object MedialLibraryCreateAsset {
     album: String?,
     callback: (String?, File?) -> Unit
   ) {
+    try {
+
     val localFile = File(uri.path)
     var destDir = MediaLibraryUtils.getEnvDirectoryForAssetType(
       MediaLibraryUtils.getMimeType(context.contentResolver, uri),
@@ -54,6 +57,12 @@ object MedialLibraryCreateAsset {
       return callback("E_COULD_NOT_CREATE_ASSET_RELATED_FILE_IS_NOT_EXISTING", null);
     }
     callback(null, destFile)
+
+    }
+    catch (error: Exception) {
+      Log.e("MediaLibrary", "Exception caught while executing createAssetFileLegacy:$error")
+      return callback("E_EXCEPTION", null);
+    }
   }
 
 
@@ -72,7 +81,7 @@ object MedialLibraryCreateAsset {
     val uri = normalizeAssetUri(localUrl)
 
     createAssetFileLegacy(context, uri, params.string("album")) { error, asset ->
-      if (error != null) return callback(error, null)
+      if (error != null) return callback(JSONObject().apply { put("error", error) }.toString(), null)
 
       MediaScannerConnection.scanFile(
         context,
