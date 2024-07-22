@@ -14,6 +14,7 @@
 #import "FetchVideoFrame.h"
 #import "Helpers.h"
 #import "react_native_media_library-Swift.h"
+#import "MediaAssetFileNative.h"
 
 
 using namespace facebook;
@@ -21,6 +22,30 @@ using namespace facebook;
 @interface MediaLibrary()
 {
 
+}
+@end
+
+@interface MediaLibraryFileEntry : NSObject
+    @property (nonatomic, strong, nonnull) NSString *name;
+    @property (nonatomic, strong, nonnull) NSString *absolutePath;
+    @property (nonatomic, assign) BOOL isDirectory;
+    @property (nonatomic, assign) UInt64 size;
+    @property (nonatomic, strong, nullable) NSDate *modificationDate;
+    - (NSMutableDictionary *)toNSDictionary;
+@end
+
+@implementation MediaLibraryFileEntry
+- (NSMutableDictionary *)toNSDictionary
+{
+     
+    NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+    [dictionary setValue:self.name forKey:@"filename"];
+    [dictionary setValue:self.absolutePath forKey:@"uri"];
+    [dictionary setValue:@(self.isDirectory) forKey:@"isDirectory"];
+    [dictionary setValue:@(self.size) forKey:@"size"];
+    [dictionary setValue:@([self.modificationDate timeIntervalSince1970] * 1000.0) forKey:@"modificationTime"];
+     
+    return dictionary;
 }
 @end
 
@@ -37,6 +62,17 @@ dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DE
 {
   return FALSE;
 }
+
+-(MediaLibraryFileEntry *) createFrom:(MediaAssetFileNative::File)file {
+    MediaLibraryFileEntry *entry = [[MediaLibraryFileEntry alloc] init];
+    entry.name = @(file.name.c_str());
+    entry.absolutePath = @(file.absolutePath.c_str());
+    entry.isDirectory = file.isDir;
+    entry.size = file.size;
+    
+    entry.modificationDate = [NSDate dateWithTimeIntervalSince1970:file.lastModificationTime / 1000];
+    return entry;
+};
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     NSLog(@"Installing MediaLibrary polyfill Bindings...");
@@ -135,6 +171,75 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                 resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
             });
         }];
+
+        return jsi::Value::undefined();
+    });
+    
+    auto getFromDisk = JSI_HOST_FUNCTION("getFromDisk", 2) {
+        std::string sortBy;
+        std::string sortOrder;
+        
+        std::string extensions;
+        std::string sort = "modificationTime_desc";
+
+        auto params = args[0].asObject(runtime);
+        auto rawPath = params.getProperty(*runtime_, "path").asString(runtime).utf8(runtime);
+        auto rawExtensions = params.getProperty(*runtime_, "extensions");
+        auto rawSortBy = params.getProperty(*runtime_, "sortBy");
+        auto rawSortOrder = params.getProperty(*runtime_, "sortOrder");
+
+        if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
+            sortBy = rawSortBy.asString(runtime).utf8(runtime);
+        }
+
+        if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
+            sortOrder = rawSortOrder.asString(runtime).utf8(runtime);
+        }
+        
+        if (!rawExtensions.isUndefined() && rawExtensions.isString()) {
+            extensions = rawExtensions.asString(runtime).utf8(runtime);
+            for (auto& x : extensions) x = tolower(x);
+        }
+
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        
+        dispatch_async(defQueue, ^{
+            MediaAssetFileNative::fileVector_t files;
+            MediaAssetFileNative::getFilesList(rawPath.c_str(), sort.c_str(), &files);
+            
+            NSMutableArray<NSMutableDictionary *> *entries = [NSMutableArray arrayWithCapacity:files.size()];
+            for(int i = 0; i < files.size(); i++) {
+                auto f = files[i];
+                auto skip = false;
+                if (extensions != "") {
+                    auto ext = f.absolutePath.substr(f.absolutePath.find_last_of(".") + 1);
+                    for (auto& x : ext) x = tolower(x);
+                    if (extensions.find(ext) == std::string::npos) skip = true;
+                }
+                
+                if (skip) continue;
+                MediaLibraryFileEntry *entry = [self createFrom:files[i]];
+                [entries addObject:[entry toNSDictionary]];
+            }
+            
+            NSError *error;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:entries
+                                            options:0
+                                              error:&error];
+            
+            NSString *jsonString = @"[]";
+            
+            if (jsonData) {
+                jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            }
+            std::string resultString = [Helpers toCString:jsonString];
+            
+            _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), &runtime, resolve]() {
+                auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+                auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+                resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+            });
+        });
 
         return jsi::Value::undefined();
     });
@@ -254,16 +359,35 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSMutableArray * imagesPathArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
 
         for (int i = 0; i < arraySize; i++) {
-            auto rawImage = imagesRawArray.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime);
-            [imagesPathArray addObject:[[NSString alloc] initWithCString:rawImage.c_str() encoding:NSUTF8StringEncoding]];
+            auto obj = imagesRawArray.getValueAtIndex(runtime, i).asObject(runtime);
+            auto rawPath = obj.getProperty(runtime, "image").asString(runtime).utf8(runtime);
+            NSString *path = [[NSString alloc] initWithCString:rawPath.c_str() encoding:NSUTF8StringEncoding];
+            NSMutableDictionary* pos = [[NSMutableDictionary alloc] init];
+            if (obj.hasProperty(runtime, "positions")) {
+                auto rawPos = obj.getProperty(runtime, "positions").asObject(runtime);
+                NSInteger x = rawPos.getProperty(runtime, "x").asNumber();
+                NSInteger y = rawPos.getProperty(runtime, "y").asNumber();
+                @try {
+                    [pos setValue:[NSNumber numberWithDouble:x] forKey:@"x"];
+                    [pos setValue:[NSNumber numberWithDouble:y] forKey:@"y"];
+                } @catch (NSException *exception) {
+                    NSLog(@"--");
+                }
+            }
+            [imagesPathArray addObject:@{@"image": path, @"positions": pos}];
         }
 
+        auto movedImages = std::move(imagesRawArray);
         dispatch_async(defQueue, ^{
-            NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:imagesPathArray.count];
-            for (NSString* path in imagesPathArray) {
+            NSMutableArray * imagesArray = [[NSMutableArray alloc] initWithCapacity:arraySize];
+            
+            for (NSDictionary* obj in imagesPathArray) {
+                NSString *path = [obj valueForKey:@"image"];
+                NSDictionary *positions = [obj valueForKey:@"positions"];
                 auto image = [LibraryImageSize imageWithPath:path];
-                if (image) [imagesArray addObject:image];
+                if (image) [imagesArray addObject:@{@"image": image, @"positions": positions}];
             }
+            [imagesPathArray removeAllObjects];
             NSString* error = [LibraryCombineImages combineImagesWithImages:imagesArray
                                                              resultSavePath:resultSavePath
                                                              mainImageIndex:mainImageIndex
@@ -452,6 +576,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
 
     auto exportModule = jsi::Object(*runtime_);
+    exportModule.setProperty(*runtime_, "getFromDisk", std::move(getFromDisk));
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));

@@ -12,7 +12,7 @@ import Foundation
 public class LibraryCombineImages: NSObject {
     @objc
     public static func combineImages(
-        images: [UIImage],
+        images: [[String: Any]],
         resultSavePath: NSString,
         mainImageIndex: NSInteger,
         backgroundColor: UIColor
@@ -21,7 +21,8 @@ public class LibraryCombineImages: NSObject {
             return "LibraryCombineImages.combineImages.emptyArray"
         }
         
-        let mainImage = images[mainImageIndex]
+        let mainJson = images[mainImageIndex]
+        let mainImage = mainJson["image"] as! UIImage
         let parentCenterX = mainImage.size.width / 2
         let parentCenterY = mainImage.size.height / 2
         let newImageSize = CGSize(width: mainImage.size.width, height: mainImage.size.height)
@@ -29,9 +30,23 @@ public class LibraryCombineImages: NSObject {
         UIGraphicsBeginImageContextWithOptions(newImageSize, false, UIScreen.main.scale)
         backgroundColor.setFill()
         UIGraphicsGetCurrentContext()!.fill(CGRect(x: 0, y: 0, width: newImageSize.width, height: newImageSize.height))
-        for image in images {
-            let x = parentCenterX - image.size.width / 2
-            let y = parentCenterY - image.size.height / 2
+        
+        for (index, json) in images.enumerated() {
+            let image = json["image"] as! UIImage
+            var x = parentCenterX - image.size.width / 2
+            var y = parentCenterY - image.size.height / 2
+            if let positions = json["positions"] as? [String: Double], let pX = positions["x"], let pY = positions["y"] {
+                x = pX
+                y = pY
+                if x > mainImage.size.width {
+                    x = mainImage.size.width - image.size.width
+                }
+                if y > mainImage.size.height {
+                    y = mainImage.size.height - image.size.height
+                }
+                if x < 0 {x = 0}
+                if y <= 0 {y = 0}
+            }
             image.draw(at: .init(x: x, y: y))
         }
         let finalImage = UIGraphicsGetImageFromCurrentImageContext()

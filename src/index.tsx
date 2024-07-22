@@ -3,10 +3,10 @@ import {
   ImageRequireSource,
   NativeModules,
   Platform,
+  ColorValue,
+  processColor,
+  type ProcessedColorValue,
 } from 'react-native';
-import { ColorValue } from './StyleSheet';
-import { processColor } from 'react-native';
-import type { ProcessedColorValue } from 'react-native';
 
 const LINKING_ERROR =
   `The package 'react-native-media-library' doesn't seem to be linked. Make sure: \n\n` +
@@ -42,7 +42,11 @@ declare global {
     ): void;
     getAssets(
       options: FetchAssetsOptions,
-      callback: (item: AssetItem[]) => void
+      callback: (items: AssetItem[]) => void
+    ): void;
+    getFromDisk(
+      options: { path: string; extensions?: string },
+      callback: (items: DiskAssetItem[]) => void
     ): void;
     getCollections(callback: (items: CollectionItem[]) => void): void;
     saveToLibrary(
@@ -56,8 +60,8 @@ declare global {
     ): void;
     combineImages(
       params: {
-        images: string[];
-        resultSavePath: string;
+        readonly images: CombineImage[];
+        readonly resultSavePath: string;
         readonly mainImageIndex?: number;
         readonly backgroundColor?: ProcessedColorValue | null | undefined;
       },
@@ -150,6 +154,14 @@ export interface AssetItem {
   readonly subtypes?: MediaSubType[];
 }
 
+export interface DiskAssetItem {
+  readonly isDirectory: boolean;
+  readonly filename: string;
+  readonly creationTime: number;
+  readonly size: number;
+  readonly uri: string;
+}
+
 export interface CollectionItem {
   readonly filename: string;
   readonly id: string;
@@ -158,7 +170,7 @@ export interface CollectionItem {
 }
 
 export interface ImageResizeParams {
-  uri: ImageRequireSource | string;
+  uri: ImagesTypes;
   width?: number;
   height?: number;
   format?: 'jpeg' | 'png';
@@ -166,7 +178,7 @@ export interface ImageResizeParams {
 }
 
 export interface ImageCropParams {
-  uri: ImageRequireSource | string;
+  uri: ImagesTypes;
   x: number;
   y: number;
   width: number;
@@ -175,8 +187,13 @@ export interface ImageCropParams {
   resultSavePath: string;
 }
 
+interface CombineImage {
+  image: ImagesTypes;
+  positions?: { x: number; y: number };
+}
+[];
+
 export interface FullAssetItem extends AssetItem {
-  readonly url: string;
   // on android, it will be available only from API 24 (N)
   readonly location?: { latitude: number; longitude: number };
 }
@@ -185,6 +202,16 @@ const prepareImages = (images: ImagesTypes[]): string[] => {
   return images.map((image) => {
     if (typeof image === 'string') return image;
     return Image.resolveAssetSource(image).uri;
+  });
+};
+
+const prepareCombineImages = (images: CombineImage[]): CombineImage[] => {
+  return images.map((image) => {
+    if (typeof image.image === 'string') return image;
+    return {
+      image: Image.resolveAssetSource(image.image).uri,
+      positions: image.positions,
+    };
   });
 };
 
@@ -203,8 +230,6 @@ export const mediaLibrary = {
       mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
       sortOrder: options?.sortOrder,
-      extensions: options?.extensions,
-      requestUrls: options?.requestUrls ?? false,
       limit: options?.limit,
       offset: options?.offset,
       onlyFavorites: options?.onlyFavorites ?? false,
@@ -217,6 +242,22 @@ export const mediaLibrary = {
     }
     return new Promise<AssetItem[]>((resolve) => {
       __mediaLibrary.getAssets(params, (response) => resolve(response));
+    });
+  },
+  getFromDisk(options: {
+    path: string;
+    extensions?: string[];
+  }): Promise<DiskAssetItem[]> {
+    return new Promise<DiskAssetItem[]>((resolve) => {
+      __mediaLibrary.getFromDisk(
+        {
+          ...options,
+          extensions: options.extensions
+            ? options.extensions.join(',')
+            : undefined,
+        },
+        (response) => resolve(response)
+      );
     });
   },
 
@@ -267,17 +308,20 @@ export const mediaLibrary = {
   },
 
   combineImages(params: {
-    images: (ImageRequireSource | string)[];
-    resultSavePath: string;
+    readonly images: (CombineImage | ImagesTypes)[];
+    readonly resultSavePath: string;
     readonly mainImageIndex?: number;
     readonly backgroundColor?: ColorValue | undefined;
   }) {
     return new Promise<{ result: boolean }>((resolve) => {
+      const images = params.images.map((img) =>
+        typeof img === 'object' ? img : { image: img }
+      );
       __mediaLibrary.combineImages(
         {
-          images: prepareImages(params.images),
+          images: prepareCombineImages(images),
           resultSavePath: params.resultSavePath,
-          mainImageIndex: params.mainImageIndex,
+          mainImageIndex: params.mainImageIndex ?? 0,
           backgroundColor: params.backgroundColor
             ? processColor(params.backgroundColor)
             : processColor('transparent'),
