@@ -49,7 +49,8 @@ public class LibrarySaveToCameraRoll: NSObject {
         collection: PHAssetCollection?
     ) async -> Result {
         let result = Result()
-        try! await PHPhotoLibrary.shared().performChanges {
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
             let changeRequest = assetType == .video
             ? PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
             : PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: url)
@@ -69,6 +70,12 @@ public class LibrarySaveToCameraRoll: NSObject {
             }
             result.error = nil
             result.result = assetPlaceholder!.localIdentifier
+        }
+            
+        }
+        catch let error {
+            print(error.localizedDescription)
+            result.error = error.localizedDescription
         }
         return result
     }
@@ -97,28 +104,36 @@ public class LibrarySaveToCameraRoll: NSObject {
         
         // create new collection
         var placeholder: PHObjectPlaceholder?
-        try! await PHPhotoLibrary.shared().performChanges {
-            let createAlbum = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(
-                withTitle: album!
-            )
-            placeholder = createAlbum.placeholderForCreatedAssetCollection
-        }
-        // if collection was created fetch it
-        if let placeholder = placeholder {
-            let collection = PHAssetCollection.fetchAssetCollections(
-                withLocalIdentifiers: [placeholder.localIdentifier],
-                options: nil
-            ).firstObject
-            if let collection = collection {
-                return await Self.saveBlock(
-                    assetType: assetType,
-                    url: url,
-                    collection: collection
+        
+        let result = Result()
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let createAlbum = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(
+                    withTitle: album!
                 )
+                placeholder = createAlbum.placeholderForCreatedAssetCollection
+            }
+            // if collection was created fetch it
+            if let placeholder = placeholder {
+                let collection = PHAssetCollection.fetchAssetCollections(
+                    withLocalIdentifiers: [placeholder.localIdentifier],
+                    options: nil
+                ).firstObject
+                if let collection = collection {
+                    return await Self.saveBlock(
+                        assetType: assetType,
+                        url: url,
+                        collection: collection
+                    )
+                }
             }
         }
+        catch let error {
+            print(error.localizedDescription)
+            result.error = error.localizedDescription
+        }
         
-        return Result()
+        return result
     }
     
     @objc

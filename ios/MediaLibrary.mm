@@ -38,6 +38,19 @@ dispatch_queue_t defQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DE
   return FALSE;
 }
 
++(NSString *)JSONString:(NSString *)aString {
+    NSMutableString *s = [NSMutableString stringWithString:aString];
+    [s replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"/" withString:@"\\/" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\n" withString:@"\\n" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\b" withString:@"\\b" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\f" withString:@"\\f" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\r" withString:@"\\r" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    [s replaceOccurrencesOfString:@"\t" withString:@"\\t" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+    return [NSString stringWithString:s];
+}
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     NSLog(@"Installing MediaLibrary polyfill Bindings...");
     auto _bridge = [RCTBridge currentBridge];
@@ -179,15 +192,20 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
             std::string errorString = "";
 
             if (error) {
-                RCTLogError(@"MediaLibraryError %@", error);
-                errorString = [Helpers toCString:error];
+                RCTLogWarn(@"MediaLibrary.saveToLibrary error: %@", error);
+                NSDictionary *responseDictionary = @{@"error": [MediaLibrary JSONString:error]};
+                NSData *data = [NSJSONSerialization dataWithJSONObject:responseDictionary options:kNilOptions error:nil];
+                NSString *jsonStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                errorString = [Helpers toCString:jsonStr];
             } else {
                 resultString = [Helpers toCString:json];
             }
 
             _bridge.jsCallInvoker->invokeAsync([data = std::move(resultString), err = std::move(errorString), &runtime, &args, resolve]() {
                 if (err.size() > 0) {
-                    resolve->asObject(runtime).asFunction(runtime).call(runtime, jsi::String::createFromUtf8(runtime, err));
+                    auto str = reinterpret_cast<const uint8_t *>(err.c_str());
+                    auto value = jsi::Value::createFromJsonUtf8(runtime, str, err.size());
+                    resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
                     return;
                 }
                 auto str = reinterpret_cast<const uint8_t *>(data.c_str());
@@ -270,7 +288,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                             backgroundColor:backgroundColor];
             
             if (error) {
-                RCTLogError(@"MediaLibraryError %@", error);
+                RCTLogWarn(@"MediaLibrary.combineImages error: %@", error);
             }
 
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
@@ -366,7 +384,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                  resultSavePath:resultSavePath];
 
             if (error) {
-                RCTLogError(@"MediaLibraryError %@", error);
+                RCTLogWarn(@"MediaLibrary.imageResize error: %@", error);
             }
 
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
@@ -409,7 +427,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                resultSavePath:resultSavePath];
 
             if (error) {
-                RCTLogError(@"MediaLibraryError %@", error);
+                RCTLogWarn(@"MediaLibrary.imageCrop error: %@", error);
             }
 
             auto result = error ? RESULT_FALSE : RESULT_TRUE;
