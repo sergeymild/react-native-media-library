@@ -6,7 +6,9 @@
 #include "Macros.h"
 
 #include <utility>
+#include <sstream>
 #include "iostream"
+#include "MediaAssetFileNative.h"
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     return facebook::jni::initialize(vm, [] {
@@ -74,6 +76,95 @@ void MediaLibrary::installJSIBindings() {
         std::function<void(std::string)> wrapperOnChange = createCallback(resolve, false);
         auto obj = GetAssetsCallback::newObjectCxxArgs(std::move(wrapperOnChange));
         method(javaPart_.get(), params, obj.get());
+        return jsi::Value::undefined();
+    });
+
+    auto getFromDisk = JSI_HOST_FUNCTION("getAssets", 2) {
+        std::string sortBy;
+        std::string sortOrder;
+
+        std::string extensions;
+        std::string sort = "modificationTime_desc";
+
+        auto params = args[0].asObject(runtime);
+        auto rawPath = params.getProperty(runtime, "path").asString(runtime).utf8(runtime);
+        auto rawExtensions = params.getProperty(runtime, "extensions");
+        auto rawSortBy = params.getProperty(runtime, "sortBy");
+        auto rawSortOrder = params.getProperty(runtime, "sortOrder");
+
+        if (!rawSortBy.isUndefined() && rawSortBy.isString()) {
+            sortBy = rawSortBy.asString(runtime).utf8(runtime);
+        }
+
+        if (!rawSortOrder.isUndefined() && rawSortOrder.isString()) {
+            sortOrder = rawSortOrder.asString(runtime).utf8(runtime);
+        }
+
+        if (!rawExtensions.isUndefined() && rawExtensions.isString()) {
+            extensions = rawExtensions.asString(runtime).utf8(runtime);
+            for (auto& x : extensions) x = tolower(x);
+        }
+
+        auto resolve = std::make_shared<jsi::Value>(runtime, args[1]);
+        MediaAssetFileNative::fileVector_t files;
+
+        MediaAssetFileNative::getFilesList(rawPath.c_str(), sort.c_str(), &files);
+        std::stringstream result;
+        result << "[";
+        int size = files.size();
+        for(int i = 0; i < size; i++) {
+            auto f = files[i];
+            auto skip = false;
+            if (extensions != "") {
+                auto ext = f.absolutePath.substr(f.absolutePath.find_last_of(".") + 1);
+                for (auto& x : ext) x = tolower(x);
+                if (extensions.find(ext) == std::string::npos) skip = true;
+            }
+
+            if (skip) continue;
+            std::stringstream model;
+            model << "{";
+
+            // name
+            model << "\"name\":";
+            model << "\"";
+            model << f.name.c_str();
+            model << "\",";
+
+            // absolutePath
+            model << "\"absolutePath\":";
+            model << "\"";
+            model << f.absolutePath.c_str();
+            model << "\",";
+
+            // modificationDate
+            model << "\"modificationDate\":";
+            model << f.lastModificationTime;
+            model << ",";
+
+            // isDirectory
+            model << "\"isDirectory\":";
+            model << f.isDir;
+            model << ",";
+
+            // size
+            model << "\"size\":";
+            model << f.size;
+
+            model << "}";
+            if (i != size -1) model << ",";
+            result << model.str();
+        }
+
+        result << "]";
+
+        jsCallInvoker_->invokeAsync([data = std::move(result.str()), &runtime, resolve]() {
+            auto str = reinterpret_cast<const uint8_t *>(data.c_str());
+            auto value = jsi::Value::createFromJsonUtf8(runtime, str, data.size());
+            resolve->asObject(runtime).asFunction(runtime).call(runtime, std::move(value));
+        });
+
+
         return jsi::Value::undefined();
     });
 
@@ -227,6 +318,7 @@ void MediaLibrary::installJSIBindings() {
    });
 
     exportModule.setProperty(*runtime_, "cacheDir", std::move(cacheDir));
+    exportModule.setProperty(*runtime_, "getFromDisk", std::move(getFromDisk));
     exportModule.setProperty(*runtime_, "getAssets", std::move(getAssets));
     exportModule.setProperty(*runtime_, "getAsset", std::move(getAsset));
     exportModule.setProperty(*runtime_, "saveToLibrary", std::move(saveToLibrary));

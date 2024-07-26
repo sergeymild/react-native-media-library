@@ -5,5 +5,6 @@ fun String.fixFilePathFromJs(): String {
 }
 
 fun String.fixFilePathToJs(): String {
+  if (this.startsWith("http")) return this
   return if (!this.startsWith("file://")) "file://$this" else this
 }

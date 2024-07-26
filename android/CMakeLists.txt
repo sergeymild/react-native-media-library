@@ -16,6 +16,7 @@ add_library(
         ${PACKAGE_NAME}
         SHARED
         src/main/cpp/MediaLibrary.cpp
+        src/main/cpp/MediaAssetFileNative.cpp
 )
 
 # includes

@@ -1,6 +1,6 @@
 buildscript {
   // Buildscript is evaluated before everything else so we can't use getExtOrDefault
-
+  def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["MediaLibrary_kotlin_version"]
 
   repositories {
     google()
@@ -12,6 +12,7 @@ buildscript {
 
   dependencies {
     classpath 'com.android.tools.build:gradle:4.2.2'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
