@@ -7,6 +7,7 @@ import android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.common.annotations.FrameworkAPI
 import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,10 +21,11 @@ class MediaLibrary(context: Context) {
   @DoNotStrip
   private var mHybridData: HybridData? = null
 
+  @OptIn(FrameworkAPI::class)
   @Suppress("KotlinJniMissingFunction")
   external fun initHybrid(
     jsContext: Long,
-    jsCallInvokerHolder: CallInvokerHolderImpl?
+    jsCallInvokerHolder: CallInvokerHolderImpl
   ): HybridData?
 
   @Suppress("KotlinJniMissingFunction")
@@ -40,6 +42,7 @@ class MediaLibrary(context: Context) {
     MediaLibrary.context = WeakReference(context.applicationContext)
   }
 
+  @OptIn(FrameworkAPI::class)
   fun install(context: ReactApplicationContext): Boolean {
     System.loadLibrary("react-native-media-library")
     val jsContext = context.javaScriptContextHolder!!
