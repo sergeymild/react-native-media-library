@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CollectionItem, mediaLibrary } from 'react-native-media-library';
+import { CollectionItem, mediaLibrary } from 'react-native-media-library2';
 import { Dimensions, FlatList, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 

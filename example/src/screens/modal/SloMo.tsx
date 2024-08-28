@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { mediaLibrary } from 'react-native-media-library';
+import { mediaLibrary } from 'react-native-media-library2';
 import Video from 'react-native-video';
 
 export const SloMo: React.FC = () => {

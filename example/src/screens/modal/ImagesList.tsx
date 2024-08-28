@@ -3,7 +3,7 @@ import {
   AssetItem,
   FetchAssetsOptions,
   mediaLibrary,
-} from 'react-native-media-library';
+} from 'react-native-media-library2';
 import {
   Dimensions,
   FlatList,
@@ -79,8 +79,8 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
               title === 'both'
                 ? ['photo', 'video']
                 : title === 'video'
-                ? ['video']
-                : ['photo'];
+                  ? ['video']
+                  : ['photo'];
             mediaLibrary.getAssets(options.current).then(setImages);
           }}
         >

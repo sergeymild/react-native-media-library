@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "react-native-media-library": ["./src/index"]
+      "react-native-media-library2": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

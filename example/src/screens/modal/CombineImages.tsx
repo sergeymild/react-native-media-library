@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
-import { mediaLibrary } from 'react-native-media-library';
+import { mediaLibrary } from 'react-native-media-library2';
 
 export const CombineImages: React.FC = () => {
   const [url] = useState(

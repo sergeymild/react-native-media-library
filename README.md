@@ -1,4 +1,4 @@
-# react-native-media-library
+# react-native-media-library2
 React Native JSI access to user's media library
 
 
@@ -25,7 +25,7 @@ This package automatically adds the `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_
 
 ```sh
 add this line to `package.json`
-"react-native-media-library": "sergeymild/react-native-media-library#0.71.11"
+"react-native-media-library2": "*"
 yarn
 npx pod-install
 ```
@@ -33,7 +33,7 @@ npx pod-install
 ## Usage
 
 ```js
-import { mediaLibrary } from "react-native-media-library";
+import { mediaLibrary } from "react-native-media-library2";
 
 // ...
 
