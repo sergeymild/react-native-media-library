@@ -947,10 +947,10 @@ PODS:
   - React-Mapbuffer (0.74.5):
     - glog
     - React-debug
-  - react-native-media-library (2.1.19):
+  - react-native-media-library (2.1.20):
     - React
     - React-jsi
-  - react-native-safe-area-context (4.7.4):
+  - react-native-safe-area-context (4.10.9):
     - React-Core
   - react-native-video (6.4.5):
     - DoubleConversion
@@ -1230,7 +1230,7 @@ PODS:
     - SDWebImageWebPCoder (~> 0.8.4)
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.14.0):
+  - RNGestureHandler (2.18.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1251,7 +1251,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreens (3.27.0):
+  - RNReanimated (3.14.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1267,6 +1267,28 @@ PODS:
     - React-ImageManager
     - React-NativeModulesApple
     - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - RNScreens (3.34.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-RCTImage
     - React-rendererdebug
     - React-utils
     - ReactCommon/turbomodule/bridging
@@ -1345,6 +1367,7 @@ DEPENDENCIES:
   - RNFastImage (from `../node_modules/react-native-fast-image`)
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - SDWebImagePhotosPlugin
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -1477,6 +1500,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNReanimated:
+    :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   Yoga:
@@ -1514,8 +1539,8 @@ SPEC CHECKSUMS:
   React-jsitracing: 3b6060bbf5317663667e1dd93560c7943ab86ccc
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
-  react-native-media-library: 3d7b0798a7cb56e3ade1a8618bad34c2b18772d0
-  react-native-safe-area-context: 2cd91d532de12acdb0a9cbc8d43ac72a8e4c897c
+  react-native-media-library: 7dc5e83139b66ab3305aa9e7e6abbf31bcbcb37f
+  react-native-safe-area-context: ab8f4a3d8180913bd78ae75dd599c94cce3d5e9a
   react-native-video: a946528939879ff1f201a0252693b721e7a22c0a
   React-nativeconfig: ba9a2e54e2f0882cf7882698825052793ed4c851
   React-NativeModulesApple: 8d11ff8955181540585c944cf48e9e7236952697
@@ -1542,8 +1567,9 @@ SPEC CHECKSUMS:
   ReactCommon: f7da14a8827b72704169a48c929bcde802698361
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: ce6dc347cb4edb664bfc250fc37cd753ae7432ec
-  RNScreens: f37061aab58a12f92a4ecb0ee99dfc6dc9500ebf
+  RNGestureHandler: efed690b8493a00b99654043daeb1335276ac4a2
+  RNReanimated: f4ff116e33e0afc3d127f70efe928847c7c66355
+  RNScreens: aa943ad421c3ced3ef5a47ede02b0cbfc43a012e
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImagePhotosPlugin: 7d52495711a00637da16bbd7098a634f524c8d7e
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d

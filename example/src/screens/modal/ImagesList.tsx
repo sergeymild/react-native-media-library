@@ -22,7 +22,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
   const [images, setImages] = useState<AssetItem[]>([]);
   const options = useRef<FetchAssetsOptions>({
     collectionId: params?.collectionId,
-    limit: 200,
+    limit: 50,
     sortBy: 'creationTime',
     sortOrder: 'desc',
   });
@@ -31,7 +31,11 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
     const strat = Date.now();
     console.log('[ImagesList.]', options.current);
     mediaLibrary.getAssets(options.current).then((r) => {
-      console.log('[ImagesList.]', (Date.now() - strat) / 1000, r.length);
+      console.log(
+        '[ImagesList.initial]',
+        (Date.now() - strat) / 1000,
+        r.length
+      );
       setImages(r);
     });
   }, []);
@@ -90,9 +94,14 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
       <FlatList<AssetItem>
         numColumns={3}
         data={images}
-        windowSize={1}
-        style={{ flex: 1 }}
+        initialNumToRender={50}
+        getItemLayout={(_, index) => ({
+          length: width / 3,
+          offset: (width / 3) * index,
+          index,
+        })}
         onEndReached={() => {
+          const strat = Date.now();
           console.log('[ImagesList.onEndReached]');
           mediaLibrary
             .getAssets({
@@ -100,10 +109,16 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
               limit: 50,
               offset: images.length - 1,
             })
-            .then((r) => setImages([...images, ...r]));
+            .then((r) => {
+              console.log(
+                '[ImagesList.more]',
+                (Date.now() - strat) / 1000,
+                r.length
+              );
+              setImages([...images, ...r]);
+            });
         }}
         renderItem={(info) => {
-          console.log('[ImagesList.]', info.item.subtypes);
           return (
             <TouchableOpacity
               onPress={async () => {
