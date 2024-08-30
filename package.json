@@ -1,6 +1,6 @@
 {
   "name": "react-native-media-library2",
-  "version": "2.1.20",
+  "version": "2.1.21",
   "description": "test",
   "main": "src/index",
   "module": "src/index",
@@ -56,7 +56,6 @@
     "react": "18.2.0",
     "react-native": "0.72.7",
     "typescript": "^5.3.2",
-
     "@react-native/babel-preset": "0.74.87",
     "@react-native/eslint-config": "0.74.87",
     "@react-native/metro-config": "0.74.87",
