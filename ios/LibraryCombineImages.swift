@@ -20,17 +20,17 @@ public class LibraryCombineImages: NSObject {
         if images.isEmpty {
             return "LibraryCombineImages.combineImages.emptyArray"
         }
-        
+
         let mainJson = images[mainImageIndex]
         let mainImage = mainJson["image"] as! UIImage
         let parentCenterX = mainImage.size.width / 2
         let parentCenterY = mainImage.size.height / 2
         let newImageSize = CGSize(width: mainImage.size.width, height: mainImage.size.height)
-        
-        UIGraphicsBeginImageContextWithOptions(newImageSize, false, UIScreen.main.scale)
+
+        UIGraphicsBeginImageContextWithOptions(newImageSize, false, 1.0)
         backgroundColor.setFill()
         UIGraphicsGetCurrentContext()!.fill(CGRect(x: 0, y: 0, width: newImageSize.width, height: newImageSize.height))
-        
+
         for (index, json) in images.enumerated() {
             let image = json["image"] as! UIImage
             var x = parentCenterX - image.size.width / 2
@@ -51,11 +51,11 @@ public class LibraryCombineImages: NSObject {
         }
         let finalImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        
+
         guard let finalImage = finalImage else {
             return "CombineImages.combineImages.emptyContext";
         }
-        
+
         return LibraryImageSize.save(image: finalImage, format: "png", path: resultSavePath)
     }
 }
