@@ -27,7 +27,7 @@ public class LibraryCombineImages: NSObject {
         let parentCenterY = mainImage.size.height / 2
         let newImageSize = CGSize(width: mainImage.size.width, height: mainImage.size.height)
         
-        UIGraphicsBeginImageContextWithOptions(newImageSize, false, UIScreen.main.scale)
+        UIGraphicsBeginImageContextWithOptions(newImageSize, false, 1.0)
         backgroundColor.setFill()
         UIGraphicsGetCurrentContext()!.fill(CGRect(x: 0, y: 0, width: newImageSize.width, height: newImageSize.height))
         
