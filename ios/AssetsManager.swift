@@ -196,6 +196,10 @@ open class MediaAssetManager: NSObject {
     }
     
     private static func assetToData(asset: PHAsset, isSloMo: Bool, url: String?) -> AssetData {
+        var localUrl = url
+        if let u = url {
+          localUrl = String(u.split(separator: "#").first!)
+        }
         var location: AssetLocation?
         if let loc = asset.location {
             location = AssetLocation(
@@ -213,7 +217,7 @@ open class MediaAssetManager: NSObject {
             height: Double(asset.pixelHeight),
             mediaType: asset.mediaType(),
             uri: "ph://\(asset.localIdentifier)",
-            url: url,
+            url: localUrl,
             location: location,
             subtypes: asset.mediaSubtypeTypes()
         )
