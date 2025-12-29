@@ -1,20 +1,32 @@
 package com.reactnativemedialibrary
 
-import com.facebook.react.ReactPackage
+import com.facebook.react.TurboReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.uimanager.ViewManager
-import com.reactnativemedialibrary.MediaLibraryModule
-import java.util.ArrayList
+import com.facebook.react.module.model.ReactModuleInfo
+import com.facebook.react.module.model.ReactModuleInfoProvider
 
-class MediaLibraryPackage : ReactPackage {
-    override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        val modules: MutableList<NativeModule> = ArrayList()
-        modules.add(MediaLibraryModule(reactContext))
-        return modules
+class MediaLibraryPackage : TurboReactPackage() {
+    override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
+        return if (name == MediaLibraryModule.NAME) {
+            MediaLibraryModule(reactContext)
+        } else {
+            null
+        }
     }
 
-    override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
-        return emptyList()
+    override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
+        return ReactModuleInfoProvider {
+            mapOf(
+                MediaLibraryModule.NAME to ReactModuleInfo(
+                    MediaLibraryModule.NAME,
+                    MediaLibraryModule.NAME,
+                    false,  // canOverrideExistingModule
+                    false,  // needsEagerInit
+                    false,  // isCxxModule
+                    true    // isTurboModule
+                )
+            )
+        }
     }
 }

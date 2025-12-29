@@ -1,5 +1,4 @@
-#import <React/RCTBridgeModule.h>
+#import <RNMediaLibrarySpec/RNMediaLibrarySpec.h>
 
-@interface MediaLibrary : NSObject <RCTBridgeModule>
-
+@interface MediaLibrary : NSObject <NativeMediaLibrarySpec>
 @end

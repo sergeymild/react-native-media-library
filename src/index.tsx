@@ -1,101 +1,5 @@
-import {
-  Image,
-  ImageRequireSource,
-  NativeModules,
-  Platform,
-  ColorValue,
-  processColor,
-  type ProcessedColorValue,
-} from 'react-native';
-
-const LINKING_ERROR =
-  `The package 'react-native-media-library2' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-  '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo managed workflow\n';
-
-const MediaLibrary = NativeModules.MediaLibrary
-  ? NativeModules.MediaLibrary
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
-
-MediaLibrary.install();
-
-declare global {
-  var __mediaLibrary: {
-    getAsset(
-      id: string,
-      callback: (item: FullAssetItem | undefined) => void
-    ): void;
-    exportVideo(
-      params: {
-        identifier: string;
-        resultSavePath: string;
-      },
-      callback: (item: FullAssetItem | undefined) => void
-    ): void;
-    getAssets(
-      options: FetchAssetsOptions,
-      callback: (items: AssetItem[]) => void
-    ): void;
-    getFromDisk(
-      options: { path: string; extensions?: string },
-      callback: (items: DiskAssetItem[]) => void
-    ): void;
-    getCollections(callback: (items: CollectionItem[]) => void): void;
-    saveToLibrary(
-      params: SaveToLibrary,
-      callback: (item: AssetItem | { error: string }) => void
-    ): void;
-
-    fetchVideoFrame(
-      params: FetchThumbnailOptions,
-      callback: (item: Thumbnail) => void
-    ): void;
-    combineImages(
-      params: {
-        readonly images: CombineImage[];
-        readonly resultSavePath: string;
-        readonly mainImageIndex?: number;
-        readonly backgroundColor?: ProcessedColorValue | null | undefined;
-      },
-      callback: (item: { result: boolean }) => void
-    ): void;
-
-    imageResize(
-      params: ImageResizeParams,
-      callback: (item: { result: boolean }) => void
-    ): void;
-    imageCrop(
-      params: ImageCropParams,
-      callback: (item: { result: boolean }) => void
-    ): void;
-
-    imageSizes(
-      params: { images: string[] },
-      callback: (
-        items: {
-          width: number;
-          height: number;
-          size: number;
-        }[]
-      ) => void
-    ): void;
-
-    downloadAsBase64(
-      params: { url: string },
-      callback: (data: { base64: string } | undefined) => void
-    ): void;
-
-    cacheDir(): string;
-  };
-}
+import { Image, ImageRequireSource, processColor } from 'react-native';
+import NativeMediaLibrary from './NativeMediaLibrary';
 
 type ImagesTypes = ImageRequireSource | string;
 
@@ -140,6 +44,7 @@ export type MediaSubType =
   | 'videoTimelapse'
   | 'videoCinematic'
   | 'unknown';
+
 export interface AssetItem {
   readonly filename: string;
   readonly id: string;
@@ -191,7 +96,6 @@ interface CombineImage {
   image: ImagesTypes;
   positions?: { x: number; y: number };
 }
-[];
 
 export interface FullAssetItem extends AssetItem {
   // on android, it will be available only from API 24 (N)
@@ -205,12 +109,16 @@ const prepareImages = (images: ImagesTypes[]): string[] => {
   });
 };
 
-const prepareCombineImages = (images: CombineImage[]): CombineImage[] => {
-  return images.map((image) => {
-    if (typeof image.image === 'string') return image;
+const prepareCombineImages = (
+  images: CombineImage[]
+): { image: string; positions?: { x: number; y: number } }[] => {
+  return images.map((item) => {
+    if (typeof item.image === 'string') {
+      return { image: item.image, positions: item.positions };
+    }
     return {
-      image: Image.resolveAssetSource(image.image).uri,
-      positions: image.positions,
+      image: Image.resolveAssetSource(item.image).uri,
+      positions: item.positions,
     };
   });
 };
@@ -222,10 +130,10 @@ const prepareImage = (image: ImagesTypes): string => {
 
 export const mediaLibrary = {
   get cacheDir(): string {
-    return __mediaLibrary.cacheDir().replace(/\/$/, '');
+    return NativeMediaLibrary.cacheDir().replace(/\/$/, '');
   },
 
-  getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
+  async getAssets(options?: FetchAssetsOptions): Promise<AssetItem[]> {
     const params = {
       mediaType: options?.mediaType ?? ['photo', 'video'],
       sortBy: options?.sortBy,
@@ -240,145 +148,116 @@ export const mediaLibrary = {
         'limit parameter must be present in order to make a pagination'
       );
     }
-    return new Promise<AssetItem[]>((resolve) => {
-      __mediaLibrary.getAssets(params, (response) => resolve(response));
-    });
+    const result = await NativeMediaLibrary.getAssets(params);
+    return result as AssetItem[];
   },
-  getFromDisk(options: {
+
+  async getFromDisk(options: {
     path: string;
     extensions?: string[];
   }): Promise<DiskAssetItem[]> {
-    return new Promise<DiskAssetItem[]>((resolve) => {
-      __mediaLibrary.getFromDisk(
-        {
-          ...options,
-          extensions: options.extensions
-            ? options.extensions.join(',')
-            : undefined,
-        },
-        (response) => resolve(response)
-      );
+    const result = await NativeMediaLibrary.getFromDisk({
+      ...options,
+      extensions: options.extensions ? options.extensions.join(',') : undefined,
     });
+    return result as DiskAssetItem[];
   },
 
-  getCollections(): Promise<CollectionItem[]> {
-    return new Promise<CollectionItem[]>((resolve) => {
-      __mediaLibrary.getCollections((response) => resolve(response));
-    });
+  async getCollections(): Promise<CollectionItem[]> {
+    const result = await NativeMediaLibrary.getCollections();
+    return result as CollectionItem[];
   },
 
-  getAsset(id: string): Promise<FullAssetItem | undefined> {
-    return new Promise<FullAssetItem | undefined>((resolve) => {
-      __mediaLibrary.getAsset(id, (response) => resolve(response));
-    });
+  async getAsset(id: string): Promise<FullAssetItem | undefined> {
+    const result = await NativeMediaLibrary.getAsset(id);
+    return result as FullAssetItem | undefined;
   },
 
-  exportVideo(params: {
+  async exportVideo(params: {
     identifier: string;
     resultSavePath: string;
   }): Promise<FullAssetItem | undefined> {
-    return new Promise<FullAssetItem | undefined>((resolve) => {
-      __mediaLibrary.exportVideo(params, (response) => resolve(response));
-    });
+    const result = await NativeMediaLibrary.exportVideo(params);
+    return result as FullAssetItem | undefined;
   },
 
-  saveToLibrary(params: SaveToLibrary) {
-    return new Promise<AssetItem>((resolve, reject) => {
-      __mediaLibrary.saveToLibrary(params, (response) => {
-        if ('error' in response) {
-          reject(response.error);
-        } else {
-          resolve(response);
-        }
-      });
-    });
+  async saveToLibrary(params: SaveToLibrary): Promise<AssetItem> {
+    const result = await NativeMediaLibrary.saveToLibrary(params);
+    const response = result as AssetItem | { error: string };
+    if ('error' in response) {
+      throw new Error(response.error);
+    }
+    return response;
   },
 
-  fetchVideoFrame(params: FetchThumbnailOptions) {
-    return new Promise<Thumbnail | undefined>((resolve) => {
-      __mediaLibrary.fetchVideoFrame(
-        {
-          time: params.time ?? 0,
-          quality: params.quality ?? 1,
-          url: params.url,
-        },
-        (response) => resolve(response)
-      );
+  async fetchVideoFrame(
+    params: FetchThumbnailOptions
+  ): Promise<Thumbnail | undefined> {
+    const result = await NativeMediaLibrary.fetchVideoFrame({
+      time: params.time ?? 0,
+      quality: params.quality ?? 1,
+      url: params.url,
     });
+    return result as Thumbnail | undefined;
   },
 
-  combineImages(params: {
+  async combineImages(params: {
     readonly images: (CombineImage | ImagesTypes)[];
     readonly resultSavePath: string;
     readonly mainImageIndex?: number;
     readonly backgroundColor?: ColorValue | undefined;
-  }) {
-    return new Promise<{ result: boolean }>((resolve) => {
-      const images = params.images.map((img) =>
-        typeof img === 'object' ? img : { image: img }
-      );
-      __mediaLibrary.combineImages(
-        {
-          images: prepareCombineImages(images),
-          resultSavePath: params.resultSavePath,
-          mainImageIndex: params.mainImageIndex ?? 0,
-          backgroundColor: params.backgroundColor
-            ? processColor(params.backgroundColor)
-            : processColor('transparent'),
-        },
-        resolve
-      );
+  }): Promise<{ result: boolean }> {
+    const images = params.images.map((img) =>
+      typeof img === 'object' && 'image' in img ? img : { image: img }
+    );
+    const result = await NativeMediaLibrary.combineImages({
+      images: prepareCombineImages(images),
+      resultSavePath: params.resultSavePath,
+      mainImageIndex: params.mainImageIndex ?? 0,
+      backgroundColor: params.backgroundColor
+        ? processColor(params.backgroundColor)
+        : processColor('transparent'),
     });
+    return result as { result: boolean };
   },
 
-  imageResize(params: ImageResizeParams) {
-    return new Promise<{ result: boolean }>((resolve) => {
-      __mediaLibrary.imageResize(
-        {
-          uri: prepareImage(params.uri),
-          resultSavePath: params.resultSavePath,
-          format: params.format ?? 'png',
-          height: params.height ?? -1,
-          width: params.width ?? -1,
-        },
-        resolve
-      );
+  async imageResize(params: ImageResizeParams): Promise<{ result: boolean }> {
+    const result = await NativeMediaLibrary.imageResize({
+      uri: prepareImage(params.uri),
+      resultSavePath: params.resultSavePath,
+      format: params.format ?? 'png',
+      height: params.height ?? -1,
+      width: params.width ?? -1,
     });
+    return result as { result: boolean };
   },
 
-  imageCrop(params: ImageCropParams) {
-    return new Promise<{ result: boolean }>((resolve) => {
-      __mediaLibrary.imageCrop(
-        {
-          ...params,
-          uri: prepareImage(params.uri),
-          format: params.format ?? 'png',
-        },
-        resolve
-      );
+  async imageCrop(params: ImageCropParams): Promise<{ result: boolean }> {
+    const result = await NativeMediaLibrary.imageCrop({
+      ...params,
+      uri: prepareImage(params.uri),
+      format: params.format ?? 'png',
     });
+    return result as { result: boolean };
   },
 
-  imageSizes(params: { images: ImagesTypes[] }): Promise<
+  async imageSizes(params: { images: ImagesTypes[] }): Promise<
     {
       width: number;
       height: number;
       size: number;
     }[]
   > {
-    return new Promise((resolve) => {
-      __mediaLibrary.imageSizes(
-        { images: prepareImages(params.images) },
-        resolve
-      );
+    const result = await NativeMediaLibrary.imageSizes({
+      images: prepareImages(params.images),
     });
+    return result as { width: number; height: number; size: number }[];
   },
 
-  downloadAsBase64(params: {
+  async downloadAsBase64(params: {
     url: string;
   }): Promise<{ base64: string } | undefined> {
-    return new Promise((resolve) => {
-      __mediaLibrary.downloadAsBase64(params, resolve);
-    });
+    const result = await NativeMediaLibrary.downloadAsBase64(params);
+    return result as { base64: string } | undefined;
   },
 };

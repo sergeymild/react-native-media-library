@@ -1,121 +1,41 @@
 buildscript {
-  // Buildscript is evaluated before everything else so we can't use getExtOrDefault
   def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["MediaLibrary_kotlin_version"]
 
   repositories {
     google()
     mavenCentral()
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:4.2.2'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-
-
-def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['MediaLibrary_' + name]
+def reactNativeArchitectures() {
+  def value = project.getProperties().get("reactNativeArchitectures")
+  return value ? value.split(",") : ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
 }
 
 def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-def reactNativeArchitectures() {
-  def value = project.getProperties().get("reactNativeArchitectures")
-  return value ? value.split(",") : ["armeabi-v7a", "arm64-v8a"]
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+if (project.hasProperty("newArchEnabled") && project.newArchEnabled == "true") {
+  apply plugin: "com.facebook.react"
 }
-
-def resolveReactNativeDirectory() {
-  def reactNativeLocation = safeExtGet("REACT_NATIVE_NODE_MODULES_DIR", null)
-  if (reactNativeLocation != null) {
-    return file(reactNativeLocation)
-  }
-
-  // monorepo workaround
-  // react-native can be hoisted or in project's own node_modules
-  def reactNativeFromProjectNodeModules = file("${rootProject.projectDir}/../node_modules/react-native")
-  if (reactNativeFromProjectNodeModules.exists()) {
-    return reactNativeFromProjectNodeModules
-  }
-
-  throw new GradleException(
-    "[Reanimated] Unable to resolve react-native location in " +
-      "node_modules. You should project extension property (in app/build.gradle) " +
-      "`REACT_NATIVE_NODE_MODULES_DIR` with path to react-native."
-  )
-}
-
-def reactNativeRootDir = resolveReactNativeDirectory()
 
 android {
-  buildFeatures {
-    prefab true
-  }
+  namespace "com.reactnativemedialibrary"
 
-
-  compileSdkVersion getExtOrDefault('compileSdkVersion')
-  buildToolsVersion getExtOrDefault('buildToolsVersion')
-  ndkVersion getExtOrDefault('ndkVersion')
+  compileSdkVersion safeExtGet("compileSdkVersion", 34)
 
   defaultConfig {
-    minSdkVersion getExtOrDefault('minSdkVersion')
-    targetSdkVersion getExtOrDefault('targetSdkVersion')
-
-    externalNativeBuild {
-      cmake {
-        cppFlags "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
-        abiFilters "armeabi-v7a", "arm64-v8a"
-        arguments '-DANDROID_STL=c++_shared',
-          "-DREACT_NATIVE_DIR=${reactNativeRootDir.path}",
-          "-DANDROID_CPP_FEATURES=rtti exceptions",
-          '-DANDROID_ARM_NEON=TRUE'
-      }
-    }
-    ndk {
-      abiFilters (*reactNativeArchitectures())
-    }
+    minSdkVersion safeExtGet("minSdkVersion", 24)
+    targetSdkVersion safeExtGet("targetSdkVersion", 34)
   }
-
-  dexOptions {
-    javaMaxHeapSize "4g"
-  }
-
-  externalNativeBuild {
-    cmake {
-      path "CMakeLists.txt"
-    }
-  }
-
-  packagingOptions {
-    // Exclude all Libraries that are already present in the user's app (through React Native or by him installing REA)
-    excludes = [
-      "META-INF",
-      "META-INF/**",
-      "**/libc++_shared.so",
-      "**/libfbjni.so",
-      "**/libjsi.so",
-      "**/libfolly_json.so",
-      "**/libfolly_runtime.so",
-      "**/libglog.so",
-      "**/libhermes.so",
-      "**/libhermes-executor-debug.so",
-      "**/libhermes_executor.so",
-      "**/libreactnativejni.so",
-      "**/libturbomodulejsijni.so",
-      "**/libreact_nativemodule_core.so",
-      "**/libjscexecutor.so",
-      "**/libv8executor.so",
-    ]
-    exclude "META-INF/**"
-    }
 
   buildTypes {
     release {
@@ -123,17 +43,19 @@ android {
     }
   }
 
-  lintOptions {
-    disable 'GradleCompatible'
-  }
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
   }
 
-  configurations {
-    extractHeaders
-    extractJNI
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs = ['src/main/java']
+    }
   }
 }
 
@@ -142,10 +64,12 @@ repositories {
   google()
 }
 
+def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["MediaLibrary_kotlin_version"]
+def coroutines_version = safeExtGet("coroutines", "1.7.3")
 
 dependencies {
   implementation "com.facebook.react:react-android"
-  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${getExtOrDefault('coroutines')}"
-  implementation "androidx.exifinterface:exifinterface:${getExtOrDefault('exifinterfaceVersion')}"
-  implementation "org.jetbrains.kotlin:kotlin-stdlib:${getExtOrDefault('kotlin_version')}"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+  implementation "androidx.exifinterface:exifinterface:${safeExtGet('exifinterfaceVersion', '1.3.6')}"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
