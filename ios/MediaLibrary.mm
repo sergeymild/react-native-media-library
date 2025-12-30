@@ -7,17 +7,18 @@
 #import <Photos/Photos.h>
 #import <CoreServices/CoreServices.h>
 #import "FetchVideoFrame.h"
-#import "react_native_media_library-Swift.h"
+#import "MediaAssetManager.h"
+#import "Base64Downloader.h"
+#import "LibraryImageSize.h"
+#import "LibraryImageResize.h"
+#import "LibraryCombineImages.h"
+#import "LibrarySaveToCameraRoll.h"
 
 @implementation MediaLibrary {
     dispatch_queue_t _queue;
 }
 
 RCT_EXPORT_MODULE()
-
-+ (NSString *)moduleName {
-    return @"MediaLibrary";
-}
 
 - (instancetype)init {
     self = [super init];
@@ -73,7 +74,7 @@ RCT_EXPORT_MODULE()
     return paths;
 }
 
-- (void)getAssets:(NSDictionary *)options
+- (void)getAssets:(JS::NativeMediaLibrary::GetAssetsOptions &)options
           resolve:(RCTPromiseResolveBlock)resolve
            reject:(RCTPromiseRejectBlock)reject {
     int limit = -1;
@@ -82,24 +83,22 @@ RCT_EXPORT_MODULE()
     NSString *collectionId = nil;
     NSString *sortOrder = nil;
 
-    NSNumber *rawLimit = options[@"limit"];
-    NSNumber *rawOffset = options[@"offset"];
-    NSString *rawSortBy = options[@"sortBy"];
-    NSString *rawSortOrder = options[@"sortOrder"];
-    NSNumber *rawOnlyFavorites = options[@"onlyFavorites"];
-    NSArray *rawMediaTypes = options[@"mediaType"];
-    NSString *rawCollectionId = options[@"collectionId"];
+    auto rawLimit = options.limit();
+    auto rawOffset = options.offset();
+    NSString *rawSortBy = options.sortBy();
+    NSString *rawSortOrder = options.sortOrder();
+    bool onlyFavorites = options.onlyFavorites();
+    auto rawMediaTypes = options.mediaType();
+    NSString *rawCollectionId = options.collectionId();
 
-    if (rawLimit) limit = [rawLimit intValue];
-    if (rawOffset) offset = [rawOffset intValue];
+    if (rawLimit.has_value()) limit = (int)rawLimit.value();
+    if (rawOffset.has_value()) offset = (int)rawOffset.value();
     if (rawSortBy) sortBy = rawSortBy;
     if (rawSortOrder) sortOrder = rawSortOrder;
     if (rawCollectionId) collectionId = rawCollectionId;
 
-    bool onlyFavorites = rawOnlyFavorites && [rawOnlyFavorites boolValue];
-
     NSMutableArray *mediaType = [[NSMutableArray alloc] init];
-    for (NSString *type in rawMediaTypes) {
+    for (NSString *type : rawMediaTypes) {
         [mediaType addObject:type];
     }
 
@@ -115,11 +114,11 @@ RCT_EXPORT_MODULE()
     }];
 }
 
-- (void)getFromDisk:(NSDictionary *)options
+- (void)getFromDisk:(JS::NativeMediaLibrary::GetFromDiskOptions &)options
             resolve:(RCTPromiseResolveBlock)resolve
              reject:(RCTPromiseRejectBlock)reject {
-    NSString *rawPath = options[@"path"];
-    NSString *rawExtensions = options[@"extensions"];
+    NSString *rawPath = options.path();
+    NSString *rawExtensions = options.extensions();
 
     NSSet *extensionsSet = nil;
     if (rawExtensions && rawExtensions.length > 0) {
@@ -208,22 +207,22 @@ RCT_EXPORT_MODULE()
     }];
 }
 
-- (void)exportVideo:(NSDictionary *)params
+- (void)exportVideo:(JS::NativeMediaLibrary::ExportVideoParams &)params
             resolve:(RCTPromiseResolveBlock)resolve
              reject:(RCTPromiseRejectBlock)reject {
-    NSString *identifier = params[@"identifier"];
-    NSString *resultPath = params[@"resultSavePath"];
+    NSString *identifier = params.identifier();
+    NSString *resultPath = params.resultSavePath();
 
     [MediaAssetManager exportVideoWithIdentifier:identifier resultSavePath:resultPath completion:^(BOOL success) {
         resolve(@{@"result": @(success)});
     }];
 }
 
-- (void)saveToLibrary:(NSDictionary *)params
+- (void)saveToLibrary:(JS::NativeMediaLibrary::SaveToLibraryParams &)params
               resolve:(RCTPromiseResolveBlock)resolve
                reject:(RCTPromiseRejectBlock)reject {
-    NSString *localUri = params[@"localUrl"];
-    NSString *album = params[@"album"] ?: @"";
+    NSString *localUri = params.localUrl();
+    NSString *album = params.album() ?: @"";
 
     [LibrarySaveToCameraRoll saveToCameraRollWithLocalUri:localUri
                                                     album:album
@@ -238,14 +237,12 @@ RCT_EXPORT_MODULE()
     }];
 }
 
-- (void)fetchVideoFrame:(NSDictionary *)params
+- (void)fetchVideoFrame:(JS::NativeMediaLibrary::FetchVideoFrameParams &)params
                 resolve:(RCTPromiseResolveBlock)resolve
                  reject:(RCTPromiseRejectBlock)reject {
-    NSString *url = params[@"url"];
-    NSNumber *rawTime = params[@"time"];
-    NSNumber *rawQuality = params[@"quality"];
-    double time = rawTime ? [rawTime doubleValue] : 0;
-    double quality = rawQuality ? [rawQuality doubleValue] : 1;
+    NSString *url = params.url();
+    double time = params.time();
+    double quality = params.quality();
 
     dispatch_async(_queue, ^{
         NSString *resultString = [FetchVideoFrame fetchVideoFrame:url time:time quality:quality];
@@ -260,21 +257,30 @@ RCT_EXPORT_MODULE()
     });
 }
 
-- (void)combineImages:(NSDictionary *)params
+- (void)combineImages:(JS::NativeMediaLibrary::CombineImagesParams &)params
               resolve:(RCTPromiseResolveBlock)resolve
                reject:(RCTPromiseRejectBlock)reject {
-    NSArray *imagesArray = params[@"images"];
-    NSString *resultSavePath = params[@"resultSavePath"];
-    NSInteger mainImageIndex = [params[@"mainImageIndex"] integerValue];
-    NSNumber *backgroundColorNum = params[@"backgroundColor"];
-    UIColor *backgroundColor = [RCTConvert UIColor:backgroundColorNum];
+    auto imagesArray = params.images();
+    NSString *resultSavePath = params.resultSavePath();
+    NSInteger mainImageIndex = (NSInteger)params.mainImageIndex();
+    auto backgroundColorOpt = params.backgroundColor();
+    UIColor *backgroundColor = backgroundColorOpt.has_value()
+        ? [RCTConvert UIColor:@(backgroundColorOpt.value())]
+        : [UIColor clearColor];
 
     dispatch_async(_queue, ^{
-        NSMutableArray *processedImages = [[NSMutableArray alloc] initWithCapacity:imagesArray.count];
+        NSMutableArray *processedImages = [[NSMutableArray alloc] initWithCapacity:imagesArray.size()];
 
-        for (NSDictionary *obj in imagesArray) {
-            NSString *path = obj[@"image"];
-            NSDictionary *positions = obj[@"positions"] ?: @{};
+        for (const auto &obj : imagesArray) {
+            NSString *path = obj.image();
+            NSDictionary *positions = @{};
+            auto positionsOpt = obj.positions();
+            if (positionsOpt.has_value()) {
+                positions = @{
+                    @"x": @(positionsOpt.value().x()),
+                    @"y": @(positionsOpt.value().y())
+                };
+            }
             UIImage *image = [LibraryImageSize imageWithPath:path];
             if (image) {
                 [processedImages addObject:@{@"image": image, @"positions": positions}];
@@ -294,14 +300,14 @@ RCT_EXPORT_MODULE()
     });
 }
 
-- (void)imageResize:(NSDictionary *)params
+- (void)imageResize:(JS::NativeMediaLibrary::ImageResizeParams &)params
             resolve:(RCTPromiseResolveBlock)resolve
              reject:(RCTPromiseRejectBlock)reject {
-    NSString *uri = params[@"uri"];
-    NSNumber *width = params[@"width"];
-    NSNumber *height = params[@"height"];
-    NSString *format = params[@"format"];
-    NSString *resultSavePath = params[@"resultSavePath"];
+    NSString *uri = params.uri();
+    NSNumber *width = @(params.width());
+    NSNumber *height = @(params.height());
+    NSString *format = params.format();
+    NSString *resultSavePath = params.resultSavePath();
 
     dispatch_async(_queue, ^{
         NSString *error = [LibraryImageResize resizeWithUri:uri
@@ -318,16 +324,16 @@ RCT_EXPORT_MODULE()
     });
 }
 
-- (void)imageCrop:(NSDictionary *)params
+- (void)imageCrop:(JS::NativeMediaLibrary::ImageCropParams &)params
           resolve:(RCTPromiseResolveBlock)resolve
            reject:(RCTPromiseRejectBlock)reject {
-    NSString *uri = params[@"uri"];
-    NSNumber *x = params[@"x"];
-    NSNumber *y = params[@"y"];
-    NSNumber *width = params[@"width"];
-    NSNumber *height = params[@"height"];
-    NSString *format = params[@"format"];
-    NSString *resultSavePath = params[@"resultSavePath"];
+    NSString *uri = params.uri();
+    NSNumber *x = @(params.x());
+    NSNumber *y = @(params.y());
+    NSNumber *width = @(params.width());
+    NSNumber *height = @(params.height());
+    NSString *format = params.format();
+    NSString *resultSavePath = params.resultSavePath();
 
     dispatch_async(_queue, ^{
         NSString *error = [LibraryImageResize cropWithUri:uri
@@ -346,10 +352,14 @@ RCT_EXPORT_MODULE()
     });
 }
 
-- (void)imageSizes:(NSDictionary *)params
+- (void)imageSizes:(JS::NativeMediaLibrary::ImageSizesParams &)params
            resolve:(RCTPromiseResolveBlock)resolve
             reject:(RCTPromiseRejectBlock)reject {
-    NSArray *images = params[@"images"];
+    auto imagesVec = params.images();
+    NSMutableArray *images = [[NSMutableArray alloc] initWithCapacity:imagesVec.size()];
+    for (NSString *img : imagesVec) {
+        [images addObject:img];
+    }
 
     [LibraryImageSize getSizesWithPaths:images completion:^(NSString * _Nonnull result) {
         NSArray *parsed = [self parseJsonToArray:result];
@@ -357,10 +367,10 @@ RCT_EXPORT_MODULE()
     }];
 }
 
-- (void)downloadAsBase64:(NSDictionary *)params
+- (void)downloadAsBase64:(JS::NativeMediaLibrary::DownloadAsBase64Params &)params
                  resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject {
-    NSString *url = params[@"url"];
+    NSString *url = params.url();
 
     dispatch_async(_queue, ^{
         [Base64Downloader downloadWithUrl:url completion:^(NSString * _Nullable result) {

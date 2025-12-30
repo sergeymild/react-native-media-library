@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "json.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface FetchVideoFrame : NSObject

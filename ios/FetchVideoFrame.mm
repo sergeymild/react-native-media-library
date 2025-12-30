@@ -75,13 +75,19 @@
     NSString *filePath = [fileURL absoluteString];
 
     CGImageRelease(imgRef);
-    json::object response;
-    
-    response.insert("url", [filePath cStringUsingEncoding:NSUTF8StringEncoding]);
-    response.insert("width", (double)thumbnail.size.width);
-    response.insert("width", (double)thumbnail.size.height);
-    
-    return [[NSString alloc] initWithCString:json::stringify(response).c_str() encoding:NSUTF8StringEncoding];
-    
+
+    NSDictionary *response = @{
+        @"url": filePath,
+        @"width": @(thumbnail.size.width),
+        @"height": @(thumbnail.size.height)
+    };
+
+    NSError *jsonError;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:response options:0 error:&jsonError];
+    if (jsonError) {
+        return NULL;
+    }
+
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 @end

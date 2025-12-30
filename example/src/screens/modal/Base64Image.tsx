@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { mediaLibrary } from 'react-native-media-library2';
+import { mediaLibrary } from 'react-native-media-library';
 
 export const Base64Image: React.FC = () => {
   const [url, setUrl] = useState(

@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  AssetItem,
-  FetchAssetsOptions,
+  type AssetItem,
+  type FetchAssetsOptions,
   mediaLibrary,
-} from 'react-native-media-library2';
+} from 'react-native-media-library';
 import {
   Dimensions,
   FlatList,
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import { useRoute } from '@react-navigation/native';
 
 const width = Dimensions.get('window').width;
@@ -83,8 +83,8 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
               title === 'both'
                 ? ['photo', 'video']
                 : title === 'video'
-                  ? ['video']
-                  : ['photo'];
+                ? ['video']
+                : ['photo'];
             mediaLibrary.getAssets(options.current).then(setImages);
           }}
         >
@@ -119,6 +119,7 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
             });
         }}
         renderItem={(info) => {
+          console.log('[ImagesList.]', info.item.uri);
           return (
             <TouchableOpacity
               onPress={async () => {
@@ -127,13 +128,9 @@ export const ImagesList: React.FC<{ collection: string | undefined }> = (
               }}
             >
               <FastImage
-                resizeSize={{ width: width / 3, height: width / 3 }}
-                width={width / 3}
-                height={width / 3}
+                resizeSize={{ width: width / 100, height: width / 100 }}
                 source={{
                   uri: info.item.uri,
-                  //@ts-ignore
-                  resizeSize: { width: width / 3, height: width / 3 },
                 }}
                 style={{
                   width: width / 3,

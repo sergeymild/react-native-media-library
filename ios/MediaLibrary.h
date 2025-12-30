@@ -1,4 +1,5 @@
-#import <RNMediaLibrarySpec/RNMediaLibrarySpec.h>
+#import <MediaLibrarySpec/MediaLibrarySpec.h>
 
 @interface MediaLibrary : NSObject <NativeMediaLibrarySpec>
+
 @end

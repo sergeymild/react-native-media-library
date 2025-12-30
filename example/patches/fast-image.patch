@@ -1,0 +1,60 @@
+--- node_modules/@d11/react-native-fast-image/ios/FastImage/FFFastImageViewManager.mm.orig
++++ node_modules/@d11/react-native-fast-image/ios/FastImage/FFFastImageViewManager.mm
+@@ -2,6 +2,10 @@
+
+ #import "FFFastImageViewManager.h"
+ #import "FFFastImageView.h"
++
++#import <SDWebImage/SDImageCache.h>
++#import <SDWebImage/SDWebImagePrefetcher.h>
++#import <SDWebImagePhotosPlugin/SDWebImagePhotosPlugin.h>
+
+ @implementation FFFastImageViewManager
+
+@@ -9,6 +13,17 @@
+
+ RCT_EXPORT_MODULE(FastImageView)
+
++- (id)init {
++    self = [super init];
++
++    // Supports HTTP URL as well as Photos URL globally
++    SDImageLoadersManager.sharedManager.loaders = @[SDWebImageDownloader.sharedDownloader, SDImagePhotosLoader.sharedLoader];
++    // Replace default manager's loader implementation
++    SDWebImageManager.defaultImageLoader = SDImageLoadersManager.sharedManager;
++
++    return self;
++}
++
+ - (FFFastImageView*)view {
+   return [[FFFastImageView alloc] init];
+ }
+--- node_modules/@d11/react-native-fast-image/ios/FastImage/FFFastImageViewComponentView.mm.orig
++++ node_modules/@d11/react-native-fast-image/ios/FastImage/FFFastImageViewComponentView.mm
+@@ -10,6 +10,10 @@
+ #import <react/renderer/components/RNFastImageSpec/Props.h>
+ #import <react/renderer/components/RNFastImageSpec/EventEmitters.h>
+
++#import <SDWebImage/SDImageCache.h>
++#import <SDWebImage/SDWebImagePrefetcher.h>
++#import <SDWebImagePhotosPlugin/SDWebImagePhotosPlugin.h>
++
+ using namespace facebook::react;
+
+ @implementation FFFastImageViewComponentView
+@@ -18,6 +22,14 @@
+     BOOL _shouldPostponeUpdate;
+ }
+
+++ (void)initialize {
++    if (self == [FFFastImageViewComponentView class]) {
++        // Supports HTTP URL as well as Photos URL globally
++        SDImageLoadersManager.sharedManager.loaders = @[SDWebImageDownloader.sharedDownloader, SDImagePhotosLoader.sharedLoader];
++        // Replace default manager's loader implementation
++        SDWebImageManager.defaultImageLoader = SDImageLoadersManager.sharedManager;
++    }
++}
++
+ + (ComponentDescriptorProvider)componentDescriptorProvider
+ {
+   return concreteComponentDescriptorProvider<FastImageViewComponentDescriptor>();

@@ -1,26 +1,29 @@
 import * as React from 'react';
 import {
+  FlatList,
   PermissionsAndroid,
+  SafeAreaView,
   StyleSheet,
-  View,
   Text,
   TouchableOpacity,
-  FlatList,
-  SafeAreaView,
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SheetProvider } from 'react-native-sheet';
 import { CollectionsList } from './screens/modal/CollectionsList';
 import { ImagesList } from './screens/modal/ImagesList';
 import { SloMo } from './screens/modal/SloMo';
 import { ExportVideo } from './screens/modal/ExportVideo';
 import { Base64Image } from './screens/modal/Base64Image';
 import { CombineImages } from './screens/modal/CombineImages';
+import { MediaPickerExample } from './screens/modal/MediaPickerExample';
 
 const Stack = createNativeStackNavigator();
 
 const screens = [
+  { name: 'MediaPicker', component: MediaPickerExample },
   { name: 'CollectionsList', component: CollectionsList },
   { name: 'ImagesList', component: ImagesList },
   { name: 'SloMo', component: SloMo },
@@ -61,30 +64,33 @@ function HomeScreen({ navigation }: { navigation: any }) {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: '#6200ee' },
-          headerTintColor: '#fff',
-        }}
-      >
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: 'Media Library' }}
-        />
-        {screens.map((screen) => (
-          <Stack.Screen
-            key={screen.name}
-            name={screen.name}
-            component={screen.component}
-          />
-        ))}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SheetProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerStyle: { backgroundColor: '#6200ee' },
+              headerTintColor: '#fff',
+            }}
+          >
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ title: 'Media Library' }}
+            />
+            {screens.map((screen) => (
+              <Stack.Screen
+                key={screen.name}
+                name={screen.name}
+                component={screen.component}
+              />
+            ))}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SheetProvider>
+    </GestureHandlerRootView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

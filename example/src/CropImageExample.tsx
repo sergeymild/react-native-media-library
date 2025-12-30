@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AssetItem, mediaLibrary } from 'react-native-media-library2';
-import FastImage from 'react-native-fast-image';
+import { AssetItem, mediaLibrary } from 'react-native-media-library';
+import FastImage from '@d11/react-native-fast-image';
 
 export const CropImageExample: React.FC = () => {
   const [original, setOriginal] = useState<AssetItem | undefined>();
